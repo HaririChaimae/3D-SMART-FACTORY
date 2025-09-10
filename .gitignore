@@ -1,0 +1,67 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.production
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Distribution files
+dist/
+build/
+*.egg-info/
+
+# Test files
+.coverage
+.pytest_cache/
+.tox/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Streamlit
+.streamlit/
+
+# FAISS indices (can be large)
+*.faiss
+*.index
+
+# Email credentials and sensitive data
+EMAIL_USER
+EMAIL_PASSWORD
+GEMINI_API_KEY
+OPENROUTER_API_KEY
+
+# Installer executables
+postgresql-installer.exe

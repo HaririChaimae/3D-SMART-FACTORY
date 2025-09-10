@@ -1,0 +1,63 @@
+Akeskous Osama
+Data Scientist and Software Engineering
+osama.akeskous.05@edu.uiz.ac.ma +212687162490 Agadir Osama Akeskous https://github.com/oussamaaxkos
+Dedicated to advancing expertise in Artificial Intelligence, Machine Learning, and Deep Learning, with a solid background in Data Science. Skilled in
+web scraping, Power BI, and statistical analysis, with hands-on experience in developing intelligent data-driven solutions.
+skills
+Data Extraction
+Machine Learning and Deep Learning Data Visualization HTML, JSON, API REST
+Sequence Models / Regression Techniques / Convolutional Plotly and Seaborn / Power BI / Looker
+Neural Networks (CNNs) / LLMs SGBD
+Programming Languages
+Relational ( Oracle, MySQL) NoSQL
+Frameworks & Libraries
+Python, JavaScript, C, JAVA, SQL (MongoDB)
+TensorFlow, PyTorch, Scikit-learn
+Scraping DevOps & Deployment
+Data Analysis Selenium, Playwright, BeautifulSoup, Scrapy Docker (containerization), Git & GitHub
+Exploratory data analysis, feature engineering, and multivariate
+analysis (ACP, AFC) using pandas, NumPy Web Development Data Warehouse / Data Mining
+Laravel, React.js / Node.js ETL, OLAP & Data modeling
+Academic Projects
+AI-Driven Voice-Controlled Chatbot for Laptop Automation
+An AI-powered voice assistant that lets users control their laptop using spoken commands. For example, saying “open YouTube” will
+automatically launch the YouTube website. It combines speech recognition and automation to create a hands-free user experience.
+SmartShop: AI-Driven E-commerce Search | PFE – EST Essaouira
+Built with TensorFlow, CNN, and Flask for intelligent product search.
+Sentiment Analysis of Customer Reviews for Bank Agencies in Morocco using a Modern Data Stack
+Automated data pipeline using Airflow, DBT, and PostgreSQL with a star schema model. Visualized insights in Looker Studio from reviews
+collected via web scraping (BeautifulSoup, Selenium).
+Work Opportunities Scraper with Web Integration
+Developed a job offer scraping system with BeautifulSoup, Selenium, and Airflow, integrating data into a real-time web platform.
+Experiences
+Internship at ITINFODEV Company | Agadir (FSA Ibn Zohr) May 2024 - July 2024
+Developed a multilingual and multi-currency e-commerce website, built a real-time mobile app
+to analyze client behavior.
+Final-year internship at SALAM INFOTECH | Agadir (EST Essaouira). April 2023 - June 2023
+Collaborated with internal teams to develop a JavaFX desktop administration application with dynamic
+AJAX/jQuery-based UI and real-time visualization of customer behavior
+Introductory internship at CSN Morocco | Taliouine (EST Essaouira) April 2022 - June 2022
+Ensure proactive communication with clients to understand and analyze their needs and concerns.
+Design and development of a social media website aimed at facilitating communication between clients and the company.
+Use of front-end technologies (HTML, CSS, JavaScript) and back-end technologies (Flask, Oracle Database) to create an
+interactive and responsive platform.
+Education
+National Institute of Statistics and Applied Economics | (INSEA) Rabat
+2024 - Present
+Master’s in Information Systems and Intelligent Systems
+Faculty of Sciences | (FSA) Agadir
+2023 - 2024
+Excellence Bachelor's Degree in Software Engineering
+Higher School of Technology | (EST) Essaouira
+2021 - 2023
+DUT Data Science
+Mohamed 6 High School | Taliouine
+2020 - 2021
+Baccalaureate in Physical Sciences and Chemistry
+Certificates Languages Areas of Interest
+DeepSeek AI - Fundamentals of Large
+Language Models (LLM) Arabic : Native Self-learning
+Certificate in Deep Learning – Sequence English : Very Good Content Creation
+Models
+French : Good Sport
+Advanced Deep Learning With Pytorch

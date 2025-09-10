@@ -1,0 +1,117 @@
+[
+  {
+    "company": "Pied Piper",
+    "url": "http://piedpiper.com/",
+    "remoteFriendly": true,
+    "market": "SaaS",
+    "size": "10-50",
+    "jobs": [
+      {
+        "position": "Software Engineer",
+        "title": "Backend Developer",
+        "description": "You will help us build API for our compression infrastructure.",
+        "url": "http://piedpiper.com/jobs/backend-developer",
+        "type": "full-time",
+        "posted": "2015-01-20",
+        "location": "US",
+        "skills": ["Python", "Javascript", "Redis"],
+        "salaryRange": { "from": 90000, "to": 100000, "currency": "USD" },
+        "equity": { "from": 0.005, "to": 0.01 },
+        "perks": ["free food", "gym membership"],
+        "apply": "http://piedpiper.com/jobs/backend-developer/apply"
+      }
+    ]
+  },
+  {
+    "company": "MediTech Solutions",
+    "url": "http://meditech.com/",
+    "remoteFriendly": false,
+    "market": "Healthcare",
+    "size": "200-500",
+    "jobs": [
+      {
+        "position": "Data Scientist",
+        "title": "Healthcare Data Analyst",
+        "description": "Analyze patient data to improve diagnosis models.",
+        "url": "http://meditech.com/jobs/data-analyst",
+        "type": "full-time",
+        "posted": "2023-06-12",
+        "location": "UK",
+        "skills": ["Python", "SQL", "Machine Learning", "Statistics"],
+        "salaryRange": { "from": 60000, "to": 75000, "currency": "GBP" },
+        "equity": { "from": 0, "to": 0 },
+        "perks": ["health insurance", "on-site cafeteria"],
+        "apply": "http://meditech.com/jobs/data-analyst/apply"
+      }
+    ]
+  },
+  {
+    "company": "FinPay",
+    "url": "http://finpay.com/",
+    "remoteFriendly": true,
+    "market": "FinTech",
+    "size": "50-100",
+    "jobs": [
+      {
+        "position": "Security Engineer",
+        "title": "Cybersecurity Specialist",
+        "description": "Help us secure payment infrastructure and prevent fraud.",
+        "url": "http://finpay.com/jobs/security-engineer",
+        "type": "full-time",
+        "posted": "2024-02-01",
+        "location": "Remote",
+        "skills": ["Network Security", "Python", "AWS", "Penetration Testing"],
+        "salaryRange": { "from": 80000, "to": 110000, "currency": "USD" },
+        "equity": { "from": 0.01, "to": 0.02 },
+        "perks": ["stock options", "remote work stipend"],
+        "apply": "http://finpay.com/jobs/security-engineer/apply"
+      }
+    ]
+  },
+  {
+    "company": "GreenCart",
+    "url": "http://greencart.com/",
+    "remoteFriendly": true,
+    "market": "E-commerce",
+    "size": "100-200",
+    "jobs": [
+      {
+        "position": "Frontend Engineer",
+        "title": "React Developer",
+        "description": "Build scalable e-commerce interfaces for millions of users.",
+        "url": "http://greencart.com/jobs/frontend-react",
+        "type": "contract",
+        "posted": "2024-05-10",
+        "location": "Germany",
+        "skills": ["React", "Javascript", "CSS", "REST API"],
+        "salaryRange": { "from": 50000, "to": 65000, "currency": "EUR" },
+        "equity": { "from": 0, "to": 0.005 },
+        "perks": ["remote flexibility", "employee discounts"],
+        "apply": "http://greencart.com/jobs/frontend-react/apply"
+      }
+    ]
+  },
+  {
+    "company": "EduNext",
+    "url": "http://edunext.org/",
+    "remoteFriendly": true,
+    "market": "EdTech",
+    "size": "20-50",
+    "jobs": [
+      {
+        "position": "AI Engineer",
+        "title": "NLP Research Engineer",
+        "description": "Develop AI models to personalize student learning experiences.",
+        "url": "http://edunext.org/jobs/nlp-engineer",
+        "type": "full-time",
+        "posted": "2024-07-15",
+        "location": "Remote",
+        "skills": ["Python", "NLP", "TensorFlow", "Deep Learning"],
+        "salaryRange": { "from": 70000, "to": 90000, "currency": "USD" },
+        "equity": { "from": 0.005, "to": 0.01 },
+        "perks": ["flexible schedule", "research budget"],
+        "apply": "http://edunext.org/jobs/nlp-engineer/apply"
+      }
+    ]
+  }
+]
