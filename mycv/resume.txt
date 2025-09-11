@@ -1,34 +1,9 @@
-Akeskous Osama
+Akeskous
+Osama
 Data Scientist and Software Engineering
-osama.akeskous.05@edu.uiz.ac.ma +212687162490 Agadir Osama Akeskous https://github.com/oussamaaxkos
-Dedicated to advancing expertise in Artificial Intelligence, Machine Learning, and Deep Learning, with a solid background in Data Science. Skilled in
-web scraping, Power BI, and statistical analysis, with hands-on experience in developing intelligent data-driven solutions.
-skills
-Data Extraction
-Machine Learning and Deep Learning Data Visualization HTML, JSON, API REST
-Sequence Models / Regression Techniques / Convolutional Plotly and Seaborn / Power BI / Looker
-Neural Networks (CNNs) / LLMs SGBD
-Programming Languages
-Relational ( Oracle, MySQL) NoSQL
-Frameworks & Libraries
-Python, JavaScript, C, JAVA, SQL (MongoDB)
-TensorFlow, PyTorch, Scikit-learn
-Scraping DevOps & Deployment
-Data Analysis Selenium, Playwright, BeautifulSoup, Scrapy Docker (containerization), Git & GitHub
-Exploratory data analysis, feature engineering, and multivariate
-analysis (ACP, AFC) using pandas, NumPy Web Development Data Warehouse / Data Mining
-Laravel, React.js / Node.js ETL, OLAP & Data modeling
-Academic Projects
-AI-Driven Voice-Controlled Chatbot for Laptop Automation
-An AI-powered voice assistant that lets users control their laptop using spoken commands. For example, saying “open YouTube” will
-automatically launch the YouTube website. It combines speech recognition and automation to create a hands-free user experience.
-SmartShop: AI-Driven E-commerce Search | PFE – EST Essaouira
-Built with TensorFlow, CNN, and Flask for intelligent product search.
-Sentiment Analysis of Customer Reviews for Bank Agencies in Morocco using a Modern Data Stack
-Automated data pipeline using Airflow, DBT, and PostgreSQL with a star schema model. Visualized insights in Looker Studio from reviews
-collected via web scraping (BeautifulSoup, Selenium).
-Work Opportunities Scraper with Web Integration
-Developed a job offer scraping system with BeautifulSoup, Selenium, and Airflow, integrating data into a real-time web platform.
+oussama.akeskous@gmail.com +212687162490 Agadir Osama Akeskous https://github.com/oussamaaxkos
+Master’s student in Information Systems and Intelligent Systems with a strong foundation in Data Science, experienced in web scraping, Power BI,
+and statistical analysis.
 Experiences
 Internship at ITINFODEV Company | Agadir (FSA Ibn Zohr) May 2024 - July 2024
 Developed a multilingual and multi-currency e-commerce website, built a real-time mobile app
@@ -41,6 +16,18 @@ Ensure proactive communication with clients to understand and analyze their need
 Design and development of a social media website aimed at facilitating communication between clients and the company.
 Use of front-end technologies (HTML, CSS, JavaScript) and back-end technologies (Flask, Oracle Database) to create an
 interactive and responsive platform.
+Academic Projects
+Sentiment Analysis of Customer Reviews for Bank Agencies in Morocco using a Modern Data Stack
+Automated data pipeline using Airflow, DBT, and PostgreSQL with a star schema model. Visualized insights in Looker Studio from reviews
+collected via web scraping (BeautifulSoup, Selenium).
+Work Opportunities Scraper with Web Integration
+Developed a job offer scraping system with BeautifulSoup, Selenium, and Airflow, integrating data into a real-time web platform.
+SmartShop: AI-Driven E-commerce Search | PFE – EST Essaouira
+Built with TensorFlow, CNN, and Flask for intelligent product search.
+Data Analysis Project: Application of PCA and AFC methods
+Used PCA and AFC with pandas, matplotlib, and seaborn to analyze and visualize multivariate data patterns.
+Home Price Prediction Using Linear Regression
+Cleaned data with Pandas and used Scikit-learn for linear regression. Deployed with a web interface for real-time predictions.
 Education
 National Institute of Statistics and Applied Economics | (INSEA) Rabat
 2024 - Present
@@ -54,10 +41,28 @@ DUT Data Science
 Mohamed 6 High School | Taliouine
 2020 - 2021
 Baccalaureate in Physical Sciences and Chemistry
-Certificates Languages Areas of Interest
-DeepSeek AI - Fundamentals of Large
-Language Models (LLM) Arabic : Native Self-learning
-Certificate in Deep Learning – Sequence English : Very Good Content Creation
-Models
+skills
+Data Extraction
+Data Visualization
+Machine Learning and Deep Learning HTML, JSON, API REST
+Plotly and Seaborn / Power BI / Looker
+Sequence Models / Regression Techniques / Convolutional
+Neural Networks (CNNs) / LLMs Data Warehouse / Data Mining
+AI/ML Frameworks & Technologies ETL, OLAP & Data modeling
+Frameworks & Libraries Selenium, Playwright, BeautifulSoup, Scrapy
+SGBD
+TensorFlow, PyTorch, Scikit-learn
+Programming Languages Relational ( Oracle, MySQL) NoSQL
+(MongoDB)
+Data Analysis Python, JavaScript, C, JAVA, SQL
+Exploratory data analysis, feature engineering, and multivariate DevOps & Deployment
+analysis (ACP, AFC) using pandas, NumPy Scraping Docker (containerization), Git & GitHub
+Selenium, Playwright, BeautifulSoup, Scrapy
+Languages Certificates Areas of Interest
+Arabic : Native DeepSeek AI - Fundamentals of Large Self-learning
+Language Models (LLM)
+English : Very Good
+Content Creation
+Certificate in Deep Learning – Sequence
 French : Good Sport
-Advanced Deep Learning With Pytorch
+Models

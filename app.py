@@ -23,6 +23,7 @@ import db
 import smtplib
 from email.mime.text import MIMEText
 import time
+import base64
 
 logger = logging.getLogger(__name__)
 GEN_MODEL = "gemini-1.5-flash"  # or whatever model you're using
@@ -253,7 +254,7 @@ def jupyter_style_editor(key, default_code=""):
     with col1:
         st.markdown(f'<div class="code-language">Python</div>', unsafe_allow_html=True)
     with col2:
-        run_clicked = st.button("▶️ Exécuter", key=f"run_{key}", use_container_width=True)
+        run_clicked = st.button("▶️ Exécuter", key=f"run_{key}", width='stretch')
 
     # Éditeur de code
     code = st.text_area(
@@ -316,7 +317,7 @@ st.markdown("""
     .icon-medium { font-size: 1.2em; margin-right: 8px; vertical-align: middle; }
     .icon-small { font-size: 1em; margin-right: 5px; vertical-align: middle; }
     
-    /* Custom button styles with icons */
+    /* Simple button styles */
     .stButton > button {
         display: flex;
         align-items: center;
@@ -343,14 +344,73 @@ st.markdown("""
         margin: 20px 0 10px 0;
     }
     
-    /* Metric cards with icons */
-    .metric-card {
-        background: black;
-        padding: 15px;
+    /* Simple styling */
+    .stButton > button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    /* Recruiter profile styling */
+    .recruiter-profile {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 12px;
+        background: #0e1117;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        text-align: center;
-        border-left: black;
+        border: 1px solid #30363d;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+    }
+
+    .recruiter-profile:hover {
+        border-color: #58a6ff;
+        box-shadow: 0 4px 8px rgba(88, 166, 255, 0.2);
+    }
+
+    .recruiter-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px;
+        border: 2px solid #58a6ff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .recruiter-info h4 {
+        margin: 0;
+        color: #f0f6fc;
+        font-size: 1.1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .recruiter-info h4:hover {
+        color: #58a6ff;
+    }
+
+    .recruiter-info p {
+        margin: 2px 0;
+        font-size: 0.9em;
+        color: #8b949e;
+    }
+
+    .recruiter-default-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #30363d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        border: 2px solid #58a6ff;
+        color: #f0f6fc;
+        font-size: 1.3em;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -472,7 +532,7 @@ if 'user' not in st.session_state:
     st.session_state.user_type = None
     st.session_state.initialized = True
 
-# Check for URL parameters (for candidate login link)
+# Check for URL parameters (for candidate login link and recruiter profile)
 query_params = st.query_params
 if 'email' in query_params:
     candidate = db.get_candidate_by_email(query_params['email'])
@@ -483,73 +543,375 @@ if 'email' in query_params:
             st.session_state.mode = 'candidate_login'
             st.session_state.candidate_email = query_params['email']
 
+# Check for recruiter profile view
+if 'recruiter' in query_params:
+    recruiter_id = query_params['recruiter']
+    try:
+        recruiter_id = int(recruiter_id)
+        recruiter = db.get_recruiter_by_id(recruiter_id)
+        if recruiter:
+            if 'mode' not in st.session_state or st.session_state.mode != 'recruiter_profile':
+                st.session_state.user = None
+                st.session_state.user_type = None
+                st.session_state.mode = 'recruiter_profile'
+                st.session_state.profile_recruiter = recruiter
+    except ValueError:
+        pass
+
 if st.session_state.user is None:
-    # Candidate login page - MINIMAL UI
-    if 'mode' in st.session_state and st.session_state.mode == 'candidate_login':
+    # Check if this is a recruiter profile view
+    if 'mode' in st.session_state and st.session_state.mode == 'recruiter_profile':
+        recruiter = st.session_state.get('profile_recruiter', {})
+
+        # Show recruiter profile page
+        st.markdown('<div class="main-title"><i class="fas fa-user-tie icon-large"></i><h1 style="margin: 0;">Recruiter Profile</h1></div>', unsafe_allow_html=True)
+
+        # Simple profile header without cover photo
+        if recruiter.get('profile_picture'):
+            st.markdown(f"""
+            <div style="display: flex; align-items: center; margin-bottom: 30px; padding: 20px; background: #000000; border-radius: 15px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <img src="data:image/png;base64,{recruiter['profile_picture']}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-right: 25px; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                <div>
+                    <h1 style="margin: 0; font-size: 2.5em; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">{recruiter['username']}</h1>
+                    <p style="margin: 8px 0; font-size: 1.2em; opacity: 0.9; color: #e0e0e0;">Senior Recruiter</p>
+                    <p style="margin: 5px 0; font-size: 1.1em; color: #cccccc;"><i class="fas fa-envelope"></i> {recruiter['email']}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div style="display: flex; align-items: center; margin-bottom: 30px; padding: 20px; background: #000000; border-radius: 15px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                <div style="width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin-right: 25px; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                    <i class="fas fa-user-tie" style="font-size: 3em; color: white;"></i>
+                </div>
+                <div>
+                    <h1 style="margin: 0; font-size: 2.5em; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">{recruiter['username']}</h1>
+                    <p style="margin: 8px 0; font-size: 1.2em; opacity: 0.9; color: #e0e0e0;">Senior Recruiter</p>
+                    <p style="margin: 5px 0; font-size: 1.1em; color: #cccccc;"><i class="fas fa-envelope"></i> {recruiter['email']}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Get recruiter's job statistics
+        jobs = db.get_jobs_by_recruiter(recruiter['id'])
+        total_jobs = len(jobs) if jobs else 0
+
+        # Get total applications for this recruiter
+        total_applications = 0
+        if jobs:
+            for job in jobs:
+                applications = db.get_resumes_by_job(job['id'])
+                if applications:
+                    total_applications += len(applications)
+
+        # Statistics cards - Focus on jobs and applications
+        st.markdown("### 📊 Recruiter Statistics")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Jobs Posted", total_jobs)
+        with col2:
+            st.metric("Total Applications", total_applications)
+
+        # All job postings by this recruiter
+        if jobs:
+            st.markdown("### 💼 All Job Postings")
+            for job in jobs:
+                with st.expander(f"📋 {job['title']} at {job['company_name']}", expanded=False):
+                    # Show job image if available
+                    if job['job_image']:
+                        col1, col2 = st.columns([1, 3])
+                        with col1:
+                            st.image(f"data:image/png;base64,{job['job_image']}", width=150, caption="Job Image")
+                        with col2:
+                            st.write(f"**Location:** {job['location']}")
+                            st.write(f"**Type:** {job['type']}")
+                            st.write(f"**Posted:** {job['posted']}")
+                            if job['salary_from']:
+                                st.write(f"**Salary:** {job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}")
+                            if job['skills']:
+                                st.write(f"**Skills:** {', '.join(job['skills'][:3])}...")
+                    else:
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.write(f"**Location:** {job['location']}")
+                            st.write(f"**Type:** {job['type']}")
+                            st.write(f"**Posted:** {job['posted']}")
+                        with col2:
+                            if job['salary_from']:
+                                st.write(f"**Salary:** {job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}")
+                            if job['skills']:
+                                st.write(f"**Skills:** {', '.join(job['skills'][:3])}...")
+
+                    # Show job description
+                    st.write(f"**Description:** {job['description'][:200]}..." if len(job['description']) > 200 else f"**Description:** {job['description']}")
+
+                    # Show applications count for this job
+                    applications = db.get_resumes_by_job(job['id'])
+                    application_count = len(applications) if applications else 0
+                    st.write(f"**Applications Received:** {application_count}")
+
+        # Add link to go back to main site
+        st.markdown("---")
+        if st.button("← Back to Job Search"):
+            st.session_state.mode = None
+            st.session_state.profile_recruiter = None
+            st.rerun()
+
+    # Check if this is a candidate login link
+    elif 'mode' in st.session_state and st.session_state.mode == 'candidate_login':
         candidate_email = st.session_state.get('candidate_email', '')
+
+        # Show candidate login page directly
+        st.markdown('<div class="main-title"><i class="fas fa-user-graduate icon-large"></i><h1 style="margin: 0;">Technical Interview Test</h1></div>', unsafe_allow_html=True)
+        st.markdown("Please log in to access your technical interview test.")
 
         # Minimal login form - just inputs and button
         with st.form("candidate_login"):
             email = st.text_input("Email", value=candidate_email)
             password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Login")
+            submitted = st.form_submit_button("Login to Test")
 
             if submitted:
                 candidate = db.get_candidate(email, password)
                 if candidate:
                     st.session_state.user = candidate
                     st.session_state.user_type = "candidate"
+                    st.rerun()  # Refresh to show the test
                 else:
-                    st.error("Invalid credentials")
+                    st.error("Invalid credentials. Please check your email for the correct password.")
+
+        # Add link to go back to main site
+        st.markdown("---")
+        if st.button("← Back to Job Search"):
+            st.session_state.mode = None
+            st.session_state.candidate_email = None
+            st.rerun()
 
     else:
-        # Main login page
-        st.markdown('<div class="main-title"><i class="fas fa-sign-in-alt icon-large"></i><h1 style="margin: 0;">Login</h1></div>', unsafe_allow_html=True)
-        role = st.selectbox("Select your role:", ["Select", "Recruiter", "Admin"])
-        if role == "Recruiter":
-            register = st.checkbox("Register new recruiter")
-            if register:
-                with st.form("recruiter_register"):
-                    username = st.text_input("Username")
-                    email = st.text_input("Email")
-                    password = st.text_input("Password", type="password")
-                    submitted = st.form_submit_button("Register")
-                    if submitted:
-                        try:
-                            db.add_recruiter(username, email, password)
-                            st.success("Registered successfully")
-                        except Exception as e:
-                            st.error(f"Error: {e}")
-            else:
-                with st.form("recruiter_login"):
-                    email = st.text_input("Email")
-                    password = st.text_input("Password", type="password")
-                    submitted = st.form_submit_button("Login")
-                    if submitted:
-                        # Check for default recruiter credentials
-                        if email == "recruiter@gmail.com" and password == "123":
-                            st.session_state.user = {"username": "Recruiter", "email": email, "id": 1}
-                            st.session_state.user_type = "recruiter"
-                        else:
-                            recruiter = db.get_recruiter(email, password)
-                            if recruiter:
-                                st.session_state.user = recruiter
-                                st.session_state.user_type = "recruiter"
-                            else:
-                                st.error("Invalid credentials")
-        elif role == "Admin":
-            with st.form("admin_login"):
-                email = st.text_input("Admin Email")
-                password = st.text_input("Admin Password", type="password")
-                submitted = st.form_submit_button("Admin Login")
-                if submitted:
-                    # For demo purposes, using simple admin credentials
-                    # In production, this should be properly secured
-                    if email == "admin@gmail.com" and password == "123":
-                        st.session_state.user = {"username": "Admin", "email": email, "id": 0}
-                        st.session_state.user_type = "admin"
+        # Public Jobs Page with Login Option
+        tab1, tab2 = st.tabs(["🔍 Browse Jobs", "🔐 Login"])
+
+        with tab1:
+            st.markdown('<div class="main-title"><i class="fas fa-briefcase icon-large"></i><h1 style="margin: 0;">Find Your Dream Job</h1></div>', unsafe_allow_html=True)
+        st.markdown("Discover exciting opportunities from top companies")
+
+        # Get all jobs for public browsing
+        jobs = db.get_all_jobs()
+
+        if jobs:
+            # Search and filter options
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                search_term = st.text_input("Search jobs", placeholder="Job title, company, or skills")
+            with col2:
+                location_filter = st.selectbox("Location", ["All"] + list(set([job['location'] for job in jobs if job['location']])))
+            with col3:
+                type_filter = st.selectbox("Job Type", ["All"] + list(set([job['type'] for job in jobs if job['type']])))
+
+            # Filter jobs
+            filtered_jobs = jobs
+            if search_term:
+                filtered_jobs = [job for job in filtered_jobs if
+                    search_term.lower() in job['title'].lower() or
+                    search_term.lower() in job['company_name'].lower() or
+                    (job['skills'] and any(search_term.lower() in skill.lower() for skill in job['skills'])) or
+                    search_term.lower() in job['description'].lower()]
+
+            if location_filter != "All":
+                filtered_jobs = [job for job in filtered_jobs if job['location'] == location_filter]
+
+            if type_filter != "All":
+                filtered_jobs = [job for job in filtered_jobs if job['type'] == type_filter]
+
+            st.markdown(f"**Found {len(filtered_jobs)} job(s)**")
+
+            # Display jobs as posts
+            for job in filtered_jobs:
+                with st.container():
+                    # Recruiter profile section - Circular image with small clickable name
+                    st.markdown(f"""
+                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                        {'<img src="data:image/png;base64,' + job['recruiter_picture'] + '" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 10px;">' if job.get('recruiter_picture') else '<div style="width: 45px; height: 45px; border-radius: 50%; background: #30363d; display: flex; align-items: center; justify-content: center; margin-right: 10px;"><i class="fas fa-user-tie" style="font-size: 1.3em; color: #f0f6fc;"></i></div>'}
+                        <button onclick="window.location.href='?recruiter={job['recruiter_id']}'" style="background: none; border: none; color: #0066cc; cursor: pointer; font-size: 0.9em; font-weight: 600; padding: 0; text-decoration: underline; margin-right: 10px;">{job['recruiter_name']}</button>
+                        <span style="font-size: 0.8em; color: #666;">Posted {job['posted']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # Job post styling
+                    if job['job_image']:
+                        # Job with image
+                        col1, col2 = st.columns([1, 2])
+                        with col1:
+                            st.image(f"data:image/png;base64,{job['job_image']}", width='stretch')
+                        with col2:
+                            st.markdown(f"### {job['title']}")
+                            st.markdown(f"**🏢 {job['company_name']}** • **📍 {job['location']}** • **💼 {job['type']}**")
+                            st.markdown(f"**Posted:** {job['posted']}")
+                            if job['salary_from']:
+                                st.markdown(f"**💰 Salary:** {job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}")
+                            if job['skills']:
+                                st.markdown(f"**🛠️ Skills:** {', '.join(job['skills'][:5])}")
+                            st.markdown(job['description'][:200] + "..." if len(job['description']) > 200 else job['description'])
                     else:
-                        st.error("Invalid admin credentials")
+                        # Job without image
+                        st.markdown("---")
+                        st.markdown(f"### {job['title']}")
+                        st.markdown(f"**🏢 {job['company_name']}** • **📍 {job['location']}** • **💼 {job['type']}**")
+                        st.markdown(f"**Posted:** {job['posted']}")
+                        if job['salary_from']:
+                            st.markdown(f"**💰 Salary:** {job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}")
+                        if job['skills']:
+                            st.markdown(f"**🛠️ Skills:** {', '.join(job['skills'][:5])}")
+                        st.markdown(job['description'][:300] + "..." if len(job['description']) > 300 else job['description'])
+
+                    # Apply section - Always show internal application form
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.markdown("**📝 Apply for this position**")
+                    with col2:
+                        if job['apply_url']:
+                            st.markdown(f"[🔗 External Link]({job['apply_url']})")
+
+                    # Create application form for direct application
+                    with st.expander("📄 Submit Your Application", expanded=False):
+                        with st.form(f"apply_{job['id']}"):
+                            applicant_name = st.text_input("Full Name")
+                            applicant_email = st.text_input("Email")
+                            applicant_phone = st.text_input("Phone (optional)")
+                            cover_letter = st.text_area("Cover Letter (optional)")
+                            resume = st.file_uploader("Upload Resume", type=["pdf", "docx"], help="Upload your resume in PDF or DOCX format")
+
+                            submitted = st.form_submit_button("🚀 Submit Application")
+                            if submitted and applicant_name and applicant_email and resume:
+                                try:
+                                    # Process the resume
+                                    file_content = resume.read()
+                                    file_name = resume.name
+                                    cv_text, cv_data = process_cv_cached(file_content, file_name)
+
+                                    if cv_data:
+                                        # Check if candidate already exists
+                                        existing_candidate = db.get_candidate_by_email(applicant_email)
+                                        if existing_candidate:
+                                            candidate_id = existing_candidate['id']
+                                            # Ensure candidate has a password for test access
+                                            if not existing_candidate.get('password'):
+                                                # Generate password if missing
+                                                generated_password = db.generate_password()
+                                                conn = db.get_db_connection()
+                                                cur = conn.cursor()
+                                                cur.execute("UPDATE candidates SET password = %s WHERE id = %s", (generated_password, candidate_id))
+                                                conn.commit()
+                                                cur.close()
+                                                conn.close()
+                                        else:
+                                            # Create job matching info for the candidate
+                                            job_matching_info = f"Applied to: {job['title']} at {job['company_name']} - {job['location']} ({job['type']})"
+
+                                            # Create new candidate with generated password
+                                            generated_password = db.generate_password()
+                                            candidate_added, _ = db.add_candidate(applicant_name, applicant_email, job_matching_info, "", job['recruiter_id'])
+                                            if candidate_added:
+                                                candidate = db.get_candidate_by_email(applicant_email)
+                                                candidate_id = candidate['id']
+                                            else:
+                                                st.error("Failed to create candidate profile")
+                                                st.stop()
+
+                                        # Check if already applied for this job
+                                        existing_resume = db.get_resume_by_candidate_and_job(candidate_id, job['id'])
+                                        if existing_resume:
+                                            st.warning(f"You have already applied for this position.")
+                                        else:
+                                            # Save resume to database
+                                            extracted_data_json = json.dumps(cv_data) if cv_data else "{}"
+                                            db.add_resume(candidate_id, job['recruiter_id'], job['id'], cv_text, extracted_data_json)
+
+                                            st.success(f"✅ Thank you {applicant_name}! Your application for '{job['title']}' has been submitted successfully.")
+
+                                            # Send confirmation email to candidate
+                                            subject = f"Application Received - {job['title']}"
+                                            body = f"""Dear {applicant_name},
+
+Thank you for applying for the {job['title']} position at {job['company_name']}.
+
+Your application has been received and is being reviewed by our recruitment team.
+
+We will contact you soon with next steps.
+
+Best regards,
+Recruitment Team"""
+
+                                            send_email(applicant_email, subject, body)
+
+                                    else:
+                                        st.error("❌ Could not process your resume. Please ensure it's a valid PDF or DOCX file.")
+
+                                except Exception as e:
+                                    st.error(f"❌ Error processing application: {e}")
+                            elif submitted:
+                                st.error("⚠️ Please fill in your name, email, and upload your resume.")
+        else:
+            st.info("No jobs available at the moment. Check back later!")
+
+        with tab2:
+            # Main login page
+            st.markdown('<div class="main-title"><i class="fas fa-sign-in-alt icon-large"></i><h1 style="margin: 0;">Login</h1></div>', unsafe_allow_html=True)
+            role = st.selectbox("Select your role:", ["Select", "Recruiter", "Admin"])
+            if role == "Recruiter":
+                register = st.checkbox("Register new recruiter")
+                if register:
+                    with st.form("recruiter_register"):
+                        username = st.text_input("Username")
+                        email = st.text_input("Email")
+                        password = st.text_input("Password", type="password")
+                        submitted = st.form_submit_button("Register")
+                        if submitted:
+                            try:
+                                db.add_recruiter(username, email, password, None)
+                                st.success("Registered successfully")
+                            except Exception as e:
+                                st.error(f"Error: {e}")
+                else:
+                    with st.form("recruiter_login"):
+                        email = st.text_input("Email")
+                        password = st.text_input("Password", type="password")
+                        submitted = st.form_submit_button("Login")
+                        if submitted:
+                            # Check for default recruiter credentials
+                            if email == "recruiter@gmail.com" and password == "123":
+                                # Check if default recruiter exists, if not create it
+                                default_recruiter = db.get_recruiter_by_id(1)
+                                if not default_recruiter:
+                                    # Create default recruiter
+                                    db.add_recruiter("Recruiter", "recruiter@gmail.com", "123")
+                                    default_recruiter = db.get_recruiter_by_id(1)
+
+                                if default_recruiter:
+                                    st.session_state.user = default_recruiter
+                                    st.session_state.user_type = "recruiter"
+                                else:
+                                    st.error("Failed to setup default recruiter")
+                            else:
+                                recruiter = db.get_recruiter(email, password)
+                                if recruiter:
+                                    st.session_state.user = recruiter
+                                    st.session_state.user_type = "recruiter"
+                                else:
+                                    st.error("Invalid credentials")
+            elif role == "Admin":
+                with st.form("admin_login"):
+                    email = st.text_input("Admin Email")
+                    password = st.text_input("Admin Password", type="password")
+                    submitted = st.form_submit_button("Admin Login")
+                    if submitted:
+                        # For demo purposes, using simple admin credentials
+                        # In production, this should be properly secured
+                        if email == "admin@gmail.com" and password == "123":
+                            st.session_state.user = {"username": "Admin", "email": email, "id": 0}
+                            st.session_state.user_type = "admin"
+                        else:
+                            st.error("Invalid admin credentials")
     st.stop()
 
 # Logout button
@@ -594,10 +956,56 @@ if st.session_state.user_type == "candidate":
 
         # Submit button - MINIMAL
         if st.button("Submit Test"):
-            # Generate correct answers if not already done
+            # Use stored correct answers if available, otherwise generate them
             correct_answers = {}
-            if not candidate.get('correct_answers'):
-                # Build knowledge base for generating correct answers
+            if candidate.get('correct_answers'):
+                try:
+                    # Parse stored correct answers from JSON
+                    import json
+                    stored_answers = json.loads(candidate['correct_answers'])
+                    # Match stored answers to current questions
+                    for question in questions:
+                        if question in stored_answers:
+                            correct_answers[question] = stored_answers[question]
+                        else:
+                            # If question not found in stored answers, generate it
+                            pdf_files_info = get_pdf_files_info()
+                            if pdf_files_info:
+                                index, texts = build_vector_store_cached(tuple(
+                                    (pdf['name'], pdf['size'], pdf['mtime']) for pdf in pdf_files_info
+                                ))
+                                if index and texts:
+                                    try:
+                                        answer = generate_answer_for_question(question, index, texts)
+                                        correct_answers[question] = answer
+                                    except Exception as e:
+                                        correct_answers[question] = f"Erreur génération: {e}"
+                                else:
+                                    correct_answers[question] = "Réponse par défaut - base de connaissances non disponible"
+                            else:
+                                correct_answers[question] = "Réponse par défaut - aucun PDF disponible"
+                except (json.JSONDecodeError, TypeError):
+                    # If parsing fails, generate answers for all questions
+                    pdf_files_info = get_pdf_files_info()
+                    if pdf_files_info:
+                        index, texts = build_vector_store_cached(tuple(
+                            (pdf['name'], pdf['size'], pdf['mtime']) for pdf in pdf_files_info
+                        ))
+                        if index and texts:
+                            for question in questions:
+                                try:
+                                    answer = generate_answer_for_question(question, index, texts)
+                                    correct_answers[question] = answer
+                                except Exception as e:
+                                    correct_answers[question] = f"Erreur génération: {e}"
+                        else:
+                            for question in questions:
+                                correct_answers[question] = "Réponse par défaut - base de connaissances non disponible"
+                    else:
+                        for question in questions:
+                            correct_answers[question] = "Réponse par défaut - aucun PDF disponible"
+            else:
+                # No stored correct answers, generate them
                 pdf_files_info = get_pdf_files_info()
                 if pdf_files_info:
                     index, texts = build_vector_store_cached(tuple(
@@ -681,11 +1089,59 @@ Recruitment System"""
         st.error("No test questions found.")
 
 elif st.session_state.user_type == "recruiter":
-    st.markdown('<div class="main-title"><i class="fas fa-user-tie icon-large"></i><h1 style="margin: 0;">Recruiter Dashboard</h1></div>', unsafe_allow_html=True)
+    # Display profile picture if available
+    recruiter = st.session_state.user
+    if recruiter.get('profile_picture'):
+        profile_pic_html = f"""
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <img src="data:image/png;base64,{recruiter['profile_picture']}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 3px solid #4CAF50;">
+            <div>
+                <h1 style="margin: 0; color: #4CAF50;">Welcome back, {recruiter['username']}!</h1>
+                <p style="margin: 5px 0; color: #666;">Recruiter Dashboard</p>
+            </div>
+        </div>
+        """
+        st.markdown(profile_pic_html, unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="main-title"><i class="fas fa-user-tie icon-large"></i><h1 style="margin: 0;">Recruiter Dashboard</h1></div>', unsafe_allow_html=True)
 
     # Get recruiter candidates
     recruiter_id = st.session_state.user.get('id') if isinstance(st.session_state.user, dict) else st.session_state.user['id']
     candidates = db.get_candidates_by_recruiter(recruiter_id)
+
+    # Profile Management Section
+    st.markdown('<div class="section-header"><i class="fas fa-user-edit icon-medium"></i><h2 style="margin: 0;">Profile Management</h2></div>', unsafe_allow_html=True)
+
+    with st.expander("📸 Update Profile Picture", expanded=False):
+        st.markdown("### Profile Picture")
+        current_profile_pic = st.session_state.user.get('profile_picture')
+        if current_profile_pic:
+            st.image(f"data:image/png;base64,{current_profile_pic}", width=100, caption="Current Profile Picture")
+
+        new_profile_pic = st.file_uploader("Upload new profile picture", type=["png", "jpg", "jpeg"], key="profile_pic_upload")
+        if st.button("Update Profile Picture", key="update_profile_pic"):
+            if new_profile_pic:
+                try:
+                    image_data = new_profile_pic.read()
+                    profile_pic_base64 = base64.b64encode(image_data).decode('utf-8')
+
+                    # Update in database
+                    conn = db.get_db_connection()
+                    cur = conn.cursor()
+                    cur.execute("UPDATE recruiters SET profile_picture = %s WHERE id = %s", (profile_pic_base64, recruiter_id))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+
+                    # Update session state
+                    st.session_state.user['profile_picture'] = profile_pic_base64
+                    st.success("Profile picture updated successfully!")
+                except Exception as e:
+                    st.error(f"Error updating profile picture: {e}")
+            else:
+                st.warning("Please select a profile picture to upload.")
+
+    st.markdown("---")
 
     # Show completed tests
     completed_candidates = [c for c in candidates if c.get('test_completed')]
@@ -734,7 +1190,7 @@ elif st.session_state.user_type == "recruiter":
         with col1:
             st.markdown(f"**{len(top_candidates)} top candidates selected**")
         with col2:
-            if st.button("🎉 Send Congratulations", key="send_congrats", use_container_width=True):
+            if st.button("🎉 Send Congratulations", key="send_congrats", width='stretch'):
                 with st.spinner("Sending congratulation emails..."):
                     sent_count = 0
                     failed_emails = []
@@ -806,62 +1262,418 @@ Recruitment Team
                     except:
                         st.write("Error loading detailed results")
 
-    # Upload new candidates
-    st.markdown('<div class="section-header"><i class="fas fa-upload icon-medium"></i><h2 style="margin: 0;">Upload New Candidates</h2></div>', unsafe_allow_html=True)
-    uploaded_files = st.file_uploader("Upload candidate resumes", type=["pdf", "docx", "png", "jpg", "jpeg"], accept_multiple_files=True)
-    if uploaded_files:
-        # Only load jobs data when files are uploaded
-        jobs_file = Path(__file__).parent / "jobs.json"
-        jobs_data = load_jobs_data(str(jobs_file))
-        for uploaded_file in uploaded_files:
-            file_content = uploaded_file.read()
-            file_name = uploaded_file.name
-            cv_text, cv_data = process_cv_cached(file_content, file_name)
-            if cv_data:
-                matches = process_job_matching(cv_data, jobs_data)
-                job_matching = str(matches)
-                username = cv_data.get('name', file_name.split('.')[0])
-                email = cv_data.get('email', f"{username}@example.com")
+    # Job Applications Management
+    st.markdown('<div class="section-header"><i class="fas fa-users icon-medium"></i><h2 style="margin: 0;">Job Applications</h2></div>', unsafe_allow_html=True)
 
-                # Generate test questions
-                try:
-                    questions, correct_answers = generate_interview_content()
-                    questions_text = "\n\n".join([f"Question {i+1}: {q}" for i, q in enumerate(questions)])
+    # Get jobs posted by this recruiter
+    jobs = db.get_jobs_by_recruiter(recruiter_id)
 
-                    candidate_added, generated_password = db.add_candidate(username, email, job_matching, questions_text, recruiter_id)
+    if jobs:
+        for job in jobs:
+            # Get applications count for this job
+            applications = db.get_resumes_by_job(job['id'])
+            application_count = len(applications) if applications else 0
 
-                    if candidate_added:
-                        # Create test link with candidate email
-                        test_link = f"http://localhost:8501/?email={email}"
+            with st.expander(f"📋 {job['title']} at {job['company_name']} - {application_count} candidates applied", expanded=False):
 
-                        subject = "Technical Interview Test Invitation"
-                        body = f"""Hi {username},
+                if applications and application_count > 0:
+                    st.markdown(f"**{application_count} candidate(s) applied**")
 
-Thank you for applying! You have been invited to take a technical interview test.
+                    # Button to send test invitations to all applicants
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.markdown("**📤 Send test invitations to all applicants**")
+                    with col2:
+                        if st.button(f"📨 Send Tests", key=f"send_test_{job['id']}", width='stretch'):
+                            with st.spinner("Generating questions and sending test invitations..."):
+                                sent_count = 0
+                                failed_emails = []
 
-Your login credentials:
-Email: {email}
-Password: {generated_password}
+                                # Generate questions for this job
+                                try:
+                                    questions, correct_answers = generate_interview_content()
+                                    questions_text = "\n\n".join([f"Question {i+1}: {q}" for i, q in enumerate(questions, 1)])
+                                except Exception as e:
+                                    st.error(f"Failed to generate questions: {e}")
+                                    questions_text = "Default questions will be used."
+                                    correct_answers = {}
+
+                                for app in applications:
+                                    try:
+                                        # Update candidate with questions and correct answers
+                                        db.update_candidate_questions(app['candidate_id'], questions_text, correct_answers)
+
+                                        # Use password from the query result
+                                        candidate_password = app['password']
+
+                                        # Generate test link
+                                        test_link = f"http://localhost:8501/?email={app['email']}"
+
+                                        subject = f"Technical Interview Test - {job['title']} Position"
+                                        body = f"""Dear {app['username']},
+
+Congratulations! You have been selected to take the technical interview test for the {job['title']} position at {job['company_name']}.
+
+Your test credentials:
+Email: {app['email']}
+Password: {candidate_password}
 
 Please click the link below to access your test:
 {test_link}
 
-After logging in, you will be able to view and complete your technical interview questions.
+Instructions:
+1. Click the link above
+2. Log in with your email and password
+3. Complete the technical exercises
+4. Submit your answers
+
+The test consists of {len(questions)} programming exercises. You will have time to solve each problem and submit your code.
+
+Good luck!
 
 Best regards,
-Recruitment Team"""
+Recruitment Team
+{st.session_state.user.get('username', 'Your Recruiter')}"""
 
-                        send_email(email, subject, body)
-                        st.success(f"Processed {file_name}, candidate added, invitation sent to {email}")
-                        st.info(f"Generated password for {username}: {generated_password}")
+                                        send_email(app['email'], subject, body)
+                                        sent_count += 1
+                                        time.sleep(1)  # Brief pause between emails
+
+                                    except Exception as e:
+                                        failed_emails.append(f"{app['username']} ({app['email']}): {str(e)}")
+
+                                # Show results
+                                if sent_count > 0:
+                                    st.success(f"✅ Successfully sent test invitations to {sent_count} candidates!")
+
+                                if failed_emails:
+                                    st.error("❌ Failed to send emails to some candidates:")
+                                    for failed in failed_emails:
+                                        st.write(f"- {failed}")
+
+                    st.markdown("---")
+
+                    # Filter applications with completed tests
+                    completed_applications = [app for app in applications if app.get('test_completed')]
+
+                    if completed_applications:
+                        st.markdown("### ✅ Candidates with Test Results")
+
+                        # Sort by score descending
+                        sorted_applications = sorted(completed_applications, key=lambda x: x.get('average_score', 0), reverse=True)
+
+                        for app in sorted_applications:
+                            col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+                            with col1:
+                                st.write(f"**{app['username']}**")
+                            with col2:
+                                st.write(f"📧 {app['email']}")
+                            with col3:
+                                st.write(f"⭐ {app.get('average_score', 0):.2f}")
+                            with col4:
+                                test_date = app.get('test_completed_at')
+                                if test_date:
+                                    st.write(f"📅 {test_date.strftime('%Y-%m-%d')}")
+
+                        # Announce results button
+                        st.markdown("---")
+                        col1, col2 = st.columns([3, 1])
+                        with col1:
+                            st.markdown(f"**📢 Announce results to {len(completed_applications)} candidates**")
+                        with col2:
+                            if st.button(f"📢 Announce Results", key=f"announce_results_{job['id']}", width='stretch'):
+                                with st.spinner("Sending result announcement emails..."):
+                                    sent_count = 0
+                                    failed_emails = []
+
+                                    for app in completed_applications:
+                                        try:
+                                            subject = f"Test Results - {job['title']} Position"
+                                            body = f"""Dear {app['username']},
+
+Thank you for completing the technical interview test for the {job['title']} position at {job['company_name']}.
+
+Your test has been evaluated and your results are now available.
+
+Test Summary:
+- Score: {app.get('average_score', 0):.2f}/10
+- Test Completed: {app.get('test_completed_at').strftime('%Y-%m-%d %H:%M') if app.get('test_completed_at') else 'N/A'}
+
+Next Steps:
+- Our recruitment team will review your application
+- You will be contacted within the next 3-5 business days
+- Please keep an eye on your email for further updates
+
+We appreciate your interest in joining our team!
+
+Best regards,
+Recruitment Team
+{st.session_state.user.get('username', 'Your Recruiter')}"""
+
+                                            send_email(app['email'], subject, body)
+                                            sent_count += 1
+                                            time.sleep(1)  # Brief pause between emails
+
+                                        except Exception as e:
+                                            failed_emails.append(f"{app['username']} ({app['email']}): {str(e)}")
+
+                                    # Show results
+                                    if sent_count > 0:
+                                        st.success(f"✅ Successfully sent result announcements to {sent_count} candidates!")
+
+                                    if failed_emails:
+                                        st.error("❌ Failed to send emails to some candidates:")
+                                        for failed in failed_emails:
+                                            st.write(f"- {failed}")
                     else:
-                        st.warning(f"Processed {file_name}, candidate {email} already exists - no email sent")
-                except Exception as e:
-                    st.error(f"Error processing candidate: {e}")
-                    st.write(f"Debug - User object: {st.session_state.user}")
-                    st.write(f"Debug - User type: {type(st.session_state.user)}")
+                        st.info("No candidates have completed their tests yet for this position.")
+
+                    # Show all applications (including those without test results)
+                    st.markdown("### 📝 All Applications")
+                    for app in applications:
+                        col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+                        with col1:
+                            st.write(f"**{app['username']}**")
+                        with col2:
+                            st.write(f"📧 {app['email']}")
+                        with col3:
+                            status = "✅ Completed" if app.get('test_completed') else "⏳ Pending"
+                            st.write(f"**Status:** {status}")
+                        with col4:
+                            if app.get('test_completed'):
+                                st.write(f"⭐ {app.get('average_score', 0):.2f}")
+                            else:
+                                st.write("Not tested")
+
+                else:
+                    st.info("No applications received for this position yet.")
+    else:
+        st.info("No job postings found. Add jobs using the 'Job Management' section.")
+
+    # Job Management Section
+    st.markdown('<div class="section-header"><i class="fas fa-briefcase icon-medium"></i><h2 style="margin: 0;">Job Management</h2></div>', unsafe_allow_html=True)
+
+    # Tabs for job management
+    job_tab1, job_tab2, job_tab3 = st.tabs(["📋 View Jobs", "➕ Add New Job", "🏢 Manage Companies"])
+
+    with job_tab1:
+        st.markdown("### Your Job Postings")
+        jobs = db.get_jobs_by_recruiter(recruiter_id)
+        if jobs:
+            for job in jobs:
+                with st.expander(f"💼 {job['title']} at {job['company_name']}", expanded=False):
+                    # Show job image if available
+                    if job['job_image']:
+                        col1, col2 = st.columns([1, 3])
+                        with col1:
+                            st.image(f"data:image/png;base64,{job['job_image']}", width=150)
+                        with col2:
+                            st.write(f"**Position:** {job['position']}")
+                            st.write(f"**Type:** {job['type']}")
+                            st.write(f"**Location:** {job['location']}")
+                            st.write(f"**Posted:** {job['posted']}")
+                            st.write(f"**Salary:** {job['salary_currency']} {job['salary_from']}-{job['salary_to']}" if job['salary_from'] else "Salary not specified")
+                            st.write(f"**Equity:** {job['equity_from']*100:.1f}%-{job['equity_to']*100:.1f}%" if job['equity_from'] or job['equity_to'] else "No equity")
+                            if job['skills']:
+                                st.write(f"**Skills:** {', '.join(job['skills'])}")
+                            if job['perks']:
+                                st.write(f"**Perks:** {', '.join(job['perks'])}")
+                    else:
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.write(f"**Position:** {job['position']}")
+                            st.write(f"**Type:** {job['type']}")
+                            st.write(f"**Location:** {job['location']}")
+                            st.write(f"**Posted:** {job['posted']}")
+                        with col2:
+                            st.write(f"**Salary:** {job['salary_currency']} {job['salary_from']}-{job['salary_to']}" if job['salary_from'] else "Salary not specified")
+                            st.write(f"**Equity:** {job['equity_from']*100:.1f}%-{job['equity_to']*100:.1f}%" if job['equity_from'] or job['equity_to'] else "No equity")
+                            if job['skills']:
+                                st.write(f"**Skills:** {', '.join(job['skills'])}")
+                            if job['perks']:
+                                st.write(f"**Perks:** {', '.join(job['perks'])}")
+
+                    st.write(f"**Description:** {job['description']}")
+                    if job['apply_url']:
+                        st.markdown(f"[Apply Here]({job['apply_url']})")
+
+                    # Delete button
+                    if st.button(f"🗑️ Delete Job", key=f"delete_job_{job['id']}", width='stretch'):
+                        try:
+                            db.delete_job(job['id'])
+                            st.success(f"Job '{job['title']}' deleted successfully!")
+                        except Exception as e:
+                            st.error(f"Error deleting job: {e}")
+        else:
+            st.info("No jobs found. Add your first job using the 'Add New Job' tab.")
+
+    with job_tab2:
+        st.markdown("### Add New Job Posting")
+
+        # First, select or add company
+        st.markdown("#### Company Information")
+        company_option = st.selectbox("Select existing company or add new:", ["Select existing", "Add new company"])
+
+        if company_option == "Select existing":
+            companies = db.get_all_companies()  # Get all companies
+            if companies:
+                company_names = [company['name'] for company in companies]
+                selected_company = st.selectbox("Select company:", company_names)
+                company_id = None
+                for company in companies:
+                    if company['name'] == selected_company:
+                        company_id = company['id']
+                        break
             else:
-                st.error(f"Could not process {file_name}")
+                st.warning("No companies found. Please add a new company.")
+                company_id = None
+        else:
+            with st.form("add_company"):
+                company_name = st.text_input("Company Name")
+                company_url = st.text_input("Company Website")
+                remote_friendly = st.checkbox("Remote Friendly")
+                market = st.text_input("Market/Sector")
+                company_size = st.text_input("Company Size (e.g., 10-50, 200-500)")
+                submitted = st.form_submit_button("Add Company")
+
+                if submitted and company_name:
+                    try:
+                        company_id = db.add_company(company_name, company_url, remote_friendly, market, company_size)
+                        if company_id:
+                            st.success(f"Company '{company_name}' added successfully!")
+                        else:
+                            st.warning(f"Company '{company_name}' already exists.")
+                    except Exception as e:
+                        st.error(f"Error adding company: {e}")
+                company_id = None
+
+        if company_id:
+            st.markdown("#### Job Information")
+            with st.form("add_job"):
+                position = st.text_input("Position")
+                title = st.text_input("Job Title")
+                description = st.text_area("Job Description")
+                job_url = st.text_input("Job URL")
+                job_type = st.selectbox("Job Type", ["full-time", "part-time", "contract", "internship"])
+                location = st.text_input("Location", "Remote")
+                posted_date = st.date_input("Posted Date")
+
+                # Skills
+                skills_input = st.text_input("Skills (comma-separated)", placeholder="Python, JavaScript, SQL")
+                skills = [s.strip() for s in skills_input.split(',') if s.strip()]
+
+                # Salary
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    salary_from = st.number_input("Salary From", min_value=0.0, step=1000.0)
+                with col2:
+                    salary_to = st.number_input("Salary To", min_value=0.0, step=1000.0)
+                with col3:
+                    salary_currency = st.selectbox("Currency", ["USD", "EUR", "GBP"], index=0)
+
+                # Equity
+                col1, col2 = st.columns(2)
+                with col1:
+                    equity_from = st.number_input("Equity From (%)", min_value=0.0, max_value=100.0, step=0.1) / 100
+                with col2:
+                    equity_to = st.number_input("Equity To (%)", min_value=0.0, max_value=100.0, step=0.1) / 100
+
+                # Perks
+                perks_input = st.text_input("Perks (comma-separated)", placeholder="free food, gym membership")
+                perks = [p.strip() for p in perks_input.split(',') if p.strip()]
+
+                job_image = st.file_uploader("Job Image (optional)", type=["png", "jpg", "jpeg"], help="Upload an image to make the job post more attractive")
+                apply_url = st.text_input("Application URL")
+
+                submitted = st.form_submit_button("Add Job")
+
+                if submitted and title and position:
+                    try:
+                        job_image_base64 = None
+                        if job_image is not None:
+                            # Convert image to base64
+                            image_data = job_image.read()
+                            job_image_base64 = base64.b64encode(image_data).decode('utf-8')
+
+                        db.add_job(
+                            company_id=company_id,
+                            recruiter_id=recruiter_id,
+                            position=position,
+                            title=title,
+                            description=description,
+                            url=job_url,
+                            job_type=job_type,
+                            posted=posted_date,
+                            location=location,
+                            skills=skills,
+                            salary_from=salary_from if salary_from > 0 else None,
+                            salary_to=salary_to if salary_to > 0 else None,
+                            salary_currency=salary_currency,
+                            equity_from=equity_from,
+                            equity_to=equity_to,
+                            perks=perks,
+                            apply_url=apply_url,
+                            job_image=job_image_base64
+                        )
+                        st.success(f"Job '{title}' added successfully!")
+                    except Exception as e:
+                        st.error(f"Error adding job: {e}")
+
+    with job_tab3:
+        st.markdown("### Company Management")
+        st.markdown("Manage companies for your job postings")
+
+        # Add new company form
+        with st.expander("➕ Add New Company", expanded=False):
+            with st.form("add_company_independent"):
+                company_name = st.text_input("Company Name")
+                company_url = st.text_input("Company Website")
+                remote_friendly = st.checkbox("Remote Friendly")
+                market = st.text_input("Market/Sector")
+                company_size = st.text_input("Company Size (e.g., 10-50, 200-500)")
+                submitted = st.form_submit_button("Add Company")
+
+                if submitted and company_name:
+                    try:
+                        company_id = db.add_company(company_name, company_url, remote_friendly, market, company_size)
+                        if company_id:
+                            st.success(f"Company '{company_name}' added successfully!")
+                        else:
+                            st.warning(f"Company '{company_name}' already exists.")
+                    except Exception as e:
+                        st.error(f"Error adding company: {e}")
+
+        # Display companies
+        st.markdown("### Existing Companies")
+        companies = db.get_all_companies()
+        if companies:
+            for company in companies:
+                with st.expander(f"🏢 {company['name']}", expanded=False):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.write(f"**Website:** {company['url'] or 'N/A'}")
+                        st.write(f"**Market:** {company['market'] or 'N/A'}")
+                        st.write(f"**Size:** {company['size'] or 'N/A'}")
+                    with col2:
+                        st.write(f"**Remote Friendly:** {'Yes' if company['remote_friendly'] else 'No'}")
+
+                    # Show jobs count for this company
+                    jobs_count = len([j for j in db.get_all_jobs() if j['company_id'] == company['id']])
+                    st.write(f"**Jobs Posted:** {jobs_count}")
+
+                    # Delete button (only if no jobs)
+                    if jobs_count == 0:
+                        if st.button(f"🗑️ Delete Company", key=f"delete_company_{company['id']}", width='stretch'):
+                            try:
+                                db.delete_company(company['id'])
+                                st.success(f"Company '{company['name']}' deleted successfully!")
+                            except Exception as e:
+                                st.error(f"Error deleting company: {e}")
+                    else:
+                        st.info("Cannot delete company with existing jobs")
+        else:
+            st.info("No companies found.")
+
     # Candidate interface removed - candidates now receive tests via email
 
 elif st.session_state.user_type == "admin":
@@ -879,12 +1691,18 @@ elif st.session_state.user_type == "admin":
                 username = st.text_input("Username")
                 email = st.text_input("Email")
                 password = st.text_input("Password", type="password")
+                profile_picture = st.file_uploader("Profile Picture", type=["png", "jpg", "jpeg"], help="Upload a profile picture for the recruiter")
                 submitted = st.form_submit_button("Add Recruiter")
                 if submitted:
                     try:
-                        db.add_recruiter(username, email, password)
+                        profile_pic_base64 = None
+                        if profile_picture is not None:
+                            # Convert image to base64
+                            image_data = profile_picture.read()
+                            profile_pic_base64 = base64.b64encode(image_data).decode('utf-8')
+
+                        db.add_recruiter(username, email, password, profile_pic_base64)
                         st.success(f"Recruiter {username} added successfully!")
-                        st.rerun()
                     except Exception as e:
                         st.error(f"Error adding recruiter: {e}")
 
@@ -905,11 +1723,10 @@ elif st.session_state.user_type == "admin":
                 with col4:
                     st.write("**Actions:**")
                 with col5:
-                    if st.button(f"🗑️ Delete", key=f"delete_recruiter_{recruiter['id']}", use_container_width=True):
+                    if st.button(f"🗑️ Delete", key=f"delete_recruiter_{recruiter['id']}", width='stretch'):
                         try:
                             db.delete_recruiter(recruiter['id'])
                             st.success(f"Recruiter {recruiter['username']} deleted successfully!")
-                            st.rerun()
                         except Exception as e:
                             st.error(f"Error deleting recruiter: {e}")
                 st.markdown("---")
