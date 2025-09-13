@@ -15,7 +15,7 @@ if __name__ == "__main__":
     print(cv_data)
 
     # 3. Charger tous les jobs depuis le JSON
-    with open(r"C:\Users\PC\OneDrive\Documents\Bureau\stage2\data\jobs\jobs.json", "r", encoding="utf-8") as f:
+    with open("jobs.json", "r", encoding="utf-8") as f:
         companies = json.load(f)
 
     # 4. Calculer le score pour chaque job

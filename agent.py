@@ -6,8 +6,8 @@ import logging
 import re
 import numpy as np
 from PyPDF2 import PdfReader
-import google.generativeai as genai
 from sentence_transformers import SentenceTransformer
+from openrouter_client import openrouter_client, generate_interview_questions, evaluate_candidate_answer
 
 # ========== CONFIG ==========
 UPLOAD_FOLDER = "mycv"
@@ -20,11 +20,9 @@ for folder in [UPLOAD_FOLDER, KNOWLEDGE_FOLDER, RESPONSES_FOLDER]:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 🔑 Gemini API (génération / RAG + évaluation)
-genai.configure(api_key=os.getenv("GEMINI_API_KEY", "AIzaSyAsFV_76YydiedKOtBiNztFsAQpXzcv0pI"))
-
-GEN_MODEL = "gemini-2.0-flash"
-EVAL_MODEL = "gemini-2.0-flash"  # Utilisation du même modèle pour l'évaluation
+# 🔑 OpenRouter API (remplace Gemini)
+GEN_MODEL = "openai/gpt-4o-mini"
+EVAL_MODEL = "openai/gpt-4o-mini"
 
 # SentenceTransformer → uniquement pour FAISS (RAG)
 st_model = SentenceTransformer("all-mpnet-base-v2")
@@ -77,52 +75,56 @@ def search_knowledge(query, index, texts, top_k=2):
 
 # ========== QUESTION GENERATION (CV + PDF corrigé) ==========
 def generate_questions_from_cv(cv_text, knowledge_chunks, n=3):
-    cv_excerpt = cv_text[:2000] if cv_text else "CV non disponible"
-    context = "\n---\n".join(knowledge_chunks[:3])[:3000]
-    prompt = f"""
-    Voici un extrait du exercices corrigé :
-    {context}
-
-    Génère {n} exercices techniques pratiques en français, 
-    apartir de la base corrigée.
-    Réponds uniquement par les questions, une par ligne.
-    """
+    """Génère des questions d'entretien en utilisant OpenRouter"""
     try:
-        model = genai.GenerativeModel(GEN_MODEL)
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        questions = []
-        for line in text.split("\n"):
-            line = re.sub(r"^(\d+[\.\)]|\-|\•)\s*", "", line.strip())
-            if line:
-                questions.append(line)
-        return questions[:n]
+        # Utiliser la fonction d'OpenRouter
+        questions = generate_interview_questions(knowledge_chunks, n)
+        logger.info(f"✅ {len(questions)} questions générées avec OpenRouter")
+        return questions
     except Exception as e:
-        logger.error(f"Error generating questions: {e}")
-        return []
+        logger.error(f"❌ Erreur génération questions OpenRouter: {e}")
+
+        # Fallback: questions prédéfinies
+        fallback_questions = [
+            "Écrivez une fonction qui calcule la somme de deux nombres.",
+            "Écrivez une fonction qui vérifie si un nombre est pair ou impair.",
+            "Écrivez une fonction qui trouve le maximum de trois nombres."
+        ]
+        logger.info(f"🔄 Fallback: {len(fallback_questions[:n])} questions prédéfinies")
+        return fallback_questions[:n]
 
 # ========== ANSWER GENERATION (RAG depuis data/) ==========
-def generate_answer_for_question(question, index, texts, max_context_length=1500):
-    relevant = search_knowledge(question, index, texts, top_k=2)
-    if not relevant:
-        return "Réponse non disponible."
-    context = "\n".join(relevant)[:max_context_length]
-    prompt = f"""
-    Question d'entretien :
-    {question}
-
-    Contexte (issu du PDF corrigé) :
-    {context}
-
-    Donne uniquement la réponse correcte, concise et directe en français.
-    """
+def generate_answer_for_question(question, index=None, texts=None, max_context_length=1500):
+    """Génère une réponse à une question en utilisant OpenRouter"""
     try:
-        model = genai.GenerativeModel(GEN_MODEL)
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        # Recherche dans la base de connaissances si disponible
+        context = ""
+        if index and texts:
+            relevant = search_knowledge(question, index, texts, top_k=2)
+            if relevant:
+                context = "\n".join(relevant)[:max_context_length]
+
+        prompt = f"""
+        Question d'entretien :
+        {question}
+
+        {"Contexte (issu du PDF corrigé) :" + context if context else ""}
+
+        Donne une réponse complète et pédagogique en français.
+        Explique le concept et fournis un exemple de code si applicable.
+        """
+
+        if openrouter_client.is_available():
+            response = openrouter_client.generate_content(prompt, max_tokens=800)
+            logger.info("✅ Réponse générée avec OpenRouter")
+            return response.strip()
+        else:
+            logger.warning("⚠️ OpenRouter non disponible - réponse par défaut")
+            return "Réponse par défaut - IA non disponible"
+
     except Exception as e:
-        logger.error(f"Error generating answer: {e}")
-        return "Réponse non disponible."
+        logger.error(f"❌ Erreur génération réponse: {e}")
+        return "Réponse non disponible - erreur système."
 
 # ========== ÉVALUATION (Gemini au lieu d'OpenRouter) - IMPROVED ==========
 def extract_json_robust(text):
@@ -248,101 +250,46 @@ def extract_json_robust(text: str):
     return None
 
 def evaluate_single_answer_with_llm(user_answer, correct_answer, question, max_retries=3):
-    """
-    Évaluation robuste :
-    - pré-checks locaux (copie d'énoncé, code présent)
-    - appel à Gemini avec rubric + format strict JSON
-    - extraction JSON robuste + fallback local
-    """
+    """Évaluation utilisant OpenRouter au lieu de Gemini"""
     try:
-        # Pré-check 1: copie de l'énoncé (seuil ajustable)
+        # Pré-check 1: copie de l'énoncé
         sim_with_question = text_similarity(user_answer, question)
         sim_with_expected = text_similarity(user_answer, correct_answer)
         logger.debug(f"Sim(question)={sim_with_question:.3f}, Sim(expected)={sim_with_expected:.3f}")
 
-        # si la réponse ressemble fortement à l'énoncé ou à la réponse attendue (ici seuil 0.80),
-        # on considère que le candidat n'a pas fourni de solution correcte (copie).
+        # Vérification de copie
         COPY_THRESHOLD = 0.80
         if sim_with_question >= COPY_THRESHOLD or sim_with_expected >= COPY_THRESHOLD:
-            return 0.0, "Réponse invalide : l'énoncé ou la réponse attendue a été recopiée au lieu de fournir une solution."
+            return 0.0, "Réponse invalide : l'énoncé ou la réponse attendue a été recopiée."
 
-        # Pré-check 2: s'il y a du code attendu, s'assurer que la réponse contient du code-like
+        # Pré-check 2: présence de code
         expected_has_code = bool(re.search(r'```|input\s*\(|def\s+|print\s*\(|for\s+|while\s+|return\s+|:=', str(correct_answer)))
         candidate_has_code = bool(re.search(r'```|input\s*\(|def\s+|print\s*\(|for\s+|while\s+|return\s+|:=', str(user_answer)))
-        # On peut signaler ce signal au modèle via le prompt (il pénalisera si attendu mais absent)
-        code_warning = ""
+
         if expected_has_code and not candidate_has_code:
-            code_warning = ("NOTE: la réponse attendue contient du code; la réponse du candidat ne semble "
-                            "pas contenir de code. Pénalisez en conséquence.")
+            return 0.2, "Code attendu mais non fourni par le candidat."
 
-        # Construire prompt d'évaluation (rubric + format exigé)
-        base_prompt = f"""
-        Tu es un évaluateur d'entretien technique. Ton rôle est de noter une réponse de candidat.
+        # Utilisation d'OpenRouter pour l'évaluation
+        try:
+            evaluation = evaluate_candidate_answer(user_answer, correct_answer, question)
 
-        QUESTION :
-        {question}
+            # Normalisation du score (OpenRouter retourne 0-10, on veut 0-1)
+            score = evaluation.get('score', 0) / 10.0
+            score = max(0.0, min(1.0, score))  # Clamp entre 0 et 1
 
-        RÉPONSE ATTENDUE :
-        {correct_answer}
+            justification = evaluation.get('justification', 'Évaluation OpenRouter')
 
-        RÉPONSE DU CANDIDAT :
-        {user_answer}
+            logger.info(f"✅ Évaluation OpenRouter: score={score}, justification='{justification[:50]}...'")
+            return score, justification
 
-        Barème (pondération) :
-        - Exactitude (60%) : le programme produit-il le bon résultat ?
-        - Cas limites & validation (20%) : respecte-t-il les contraintes ?
-        - Lisibilité du code (10%) : est-ce clair et compréhensible ?
-        - Format & robustesse (10%) : code exécutable et bien structuré ?
-
-        Règles critiques :
-        - Si le candidat copie seulement l'énoncé ou la réponse attendue, mets score=0.0 et justification="Copie - aucune solution".
-        - Si la réponse attendue contient du code mais le candidat n'en fournit pas, mets score ≤ 0.2.
-        - Si la solution est très incomplète (ex: prend 1 entrée au lieu de 3), mets un score faible (0.1 à 0.3).
-        - Réponds UNIQUEMENT avec du JSON valide, jamais de texte hors JSON.
-
-        Format de sortie attendu :
-        {{
-        "score": 0.xx,
-        "justification": "Phrase courte (max 140 caractères, en français)"
-        }}
-        """
-
-
-        # Appel LLM
-        model = genai.GenerativeModel(EVAL_MODEL)
-        generation_config = {
-            "temperature": 0.0,
-            "max_output_tokens": 200
-        }
-
-        for attempt in range(max_retries):
-            response = model.generate_content(base_prompt, generation_config=generation_config)
-            text = response.text.strip()
-            logger.debug(f"Gemini response (attempt {attempt+1}): {text}")
-
-            data = extract_json_robust(text)
-            if data and "score" in data:
-                # clamp score between 0 and 1
-                try:
-                    score = float(data.get("score", 0.0))
-                except Exception:
-                    score = 0.0
-                score = max(0.0, min(1.0, score))
-                justification = data.get("justification", "").strip() or "Pas de justification fournie"
-                logger.info(f"Evaluation OK: score={score}, justification='{justification}'")
-                return score, justification
-
-            logger.warning(f"JSON invalide ou absent (tentative {attempt+1}). Réponse brute : {text}")
-
-        # fallback local heuristics si Gemini n'a pas renvoyé un JSON exploitable
-        # Simple heuristique : présence de code -> 0.5 sinon 0.1 (à ajuster)
-        fallback_score = 0.5 if candidate_has_code else 0.1
-        fallback_just = "Fallback heuristique: absence de réponse JSON valide du modèle"
-        logger.warning("Toutes les tentatives ont échoué, retour fallback.")
-        return fallback_score, fallback_just
+        except Exception as e:
+            logger.warning(f"⚠️ Erreur OpenRouter: {e}")
+            # Fallback local
+            fallback_score = 0.5 if candidate_has_code else 0.1
+            return fallback_score, "Évaluation par défaut - IA temporairement indisponible"
 
     except Exception as e:
-        logger.exception("Erreur lors de l'évaluation LLM.")
+        logger.exception("Erreur lors de l'évaluation")
         return 0.0, f"Erreur d'évaluation: {e}"
 
 def evaluate_answers(user_answers, correct_answers, threshold=0.75):

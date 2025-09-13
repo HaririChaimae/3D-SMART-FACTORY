@@ -18,23 +18,35 @@ def compute_score(cv_data, job_skills):
 
 def match_jobs(cv_data, jobs_data):
     """
-    Parcourt toutes les entreprises et leurs jobs dans le JSON,
-    calcule le score de matching et renvoie le meilleur match
-    (job_title @ company).
+    Parcourt toutes les entreprises et leurs jobs (format imbriqué ou plat),
+    calcule le score de matching et renvoie la liste des jobs correspondants.
     """
-    best_match = None
-    best_score = 0
+    matches = []
 
-    for company in jobs_data:
-        company_name = company.get("company", "Sans nom")
-        for job in company.get("jobs", []):
-            job_title = job.get("title", "Sans titre")
-            job_skills = job.get("skills", [])
+    for item in jobs_data:
+        # Cas 1 : format imbriqué (company → jobs)
+        if "jobs" in item:
+            company_name = item.get("company", "Sans nom")
+            for job in item.get("jobs", []):
+                score, matched_skills = compute_score(cv_data, job.get("skills", []))
+                if score > 0:
+                    job_copy = job.copy()
+                    job_copy["company_name"] = company_name
+                    job_copy["match_score"] = score
+                    job_copy["matched_skills"] = matched_skills
+                    matches.append(job_copy)
 
-            score, matched_skills = compute_score(cv_data, job_skills)
+        # Cas 2 : format plat (déjà un job dict)
+        else:
+            score, matched_skills = compute_score(cv_data, item.get("skills", []))
+            if score > 0:
+                job_copy = item.copy()
+                job_copy["company_name"] = item.get("company_name", item.get("company", "Sans nom"))
+                job_copy["match_score"] = score
+                job_copy["matched_skills"] = matched_skills
+                matches.append(job_copy)
 
-            if score > best_score:
-                best_score = score
-                best_match = f"{job_title} @ {company_name}"
+    # Trier par score décroissant
+    matches.sort(key=lambda j: j["match_score"], reverse=True)
 
-    return best_match if best_match else "No suitable job found"
+    return matches

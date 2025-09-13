@@ -1,4 +1,5 @@
-streamlit
+flask
+flask-session
 langchain
 openai
 faiss-cpu
@@ -6,5 +7,5 @@ PyPDF2
 python-docx
 tiktoken
 psycopg2-binary
-google-generativeai
 python-dotenv
+sentence-transformers

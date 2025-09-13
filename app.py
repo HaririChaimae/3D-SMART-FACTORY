@@ -309,110 +309,275 @@ from pathlib import Path
 # === Configuration Streamlit ===
 st.set_page_config(page_title="Entretien Automatisé", page_icon="🤖", layout="centered")
 
-# Add Font Awesome icons and custom styles
+# Add Google Fonts, Font Awesome and modern styling
 st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-    .icon-large { font-size: 1.5em; margin-right: 10px; vertical-align: middle; }
-    .icon-medium { font-size: 1.2em; margin-right: 8px; vertical-align: middle; }
-    .icon-small { font-size: 1em; margin-right: 5px; vertical-align: middle; }
-    
-    /* Simple button styles */
-    .stButton > button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    /* Success/Warning/Error icons */
-    .success-icon { color: #28a745; }
-    .warning-icon { color: #ffc107; }
-    .error-icon { color: #dc3545; }
-    .info-icon { color: #17a2b8; }
-    
-    /* Header styles */
-    .main-title {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .section-header {
-        display: flex;
-        align-items: center;
-        margin: 20px 0 10px 0;
-    }
-    
-    /* Simple styling */
-    .stButton > button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
+    /* === GLOBAL STYLE === */
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8f9fa; /* fond gris clair */
+    color: #2d2d2d;
+    min-height: 100vh;
+}
 
-    /* Recruiter profile styling */
-    .recruiter-profile {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
-        padding: 12px;
-        background: #0e1117;
-        border-radius: 8px;
-        border: 1px solid #30363d;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-    }
+.block-container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 2rem 1rem;
+}
 
-    .recruiter-profile:hover {
-        border-color: #58a6ff;
-        box-shadow: 0 4px 8px rgba(88, 166, 255, 0.2);
-    }
+/* === HERO / HEADER === */
+.hero-banner {
+    text-align: center;
+    padding: 50px 20px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.hero-banner h1 {
+    font-size: 42px;
+    font-weight: 700;
+    color: #2d2d2d;
+    margin: 0;
+}
+.hero-banner p {
+    font-size: 18px;
+    color: #555;
+}
 
-    .recruiter-avatar {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-right: 12px;
-        border: 2px solid #58a6ff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
+/* === SEARCH BAR === */
+.search-container {
+    position: sticky;
+    top: 10px; /* reste visible quand on scroll */
+    z-index: 100;
+    background: white;
+    border: 1px solid #e5e7eb;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
 
-    .recruiter-info h4 {
-        margin: 0;
-        color: #f0f6fc;
-        font-size: 1.1em;
-        font-weight: 600;
-        cursor: pointer;
-        transition: color 0.3s ease;
-    }
+.search-input, .search-select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+    background: white;
+}
 
-    .recruiter-info h4:hover {
-        color: #58a6ff;
-    }
+.search-input:focus, .search-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+    outline: none;
+}
 
-    .recruiter-info p {
-        margin: 2px 0;
-        font-size: 0.9em;
-        color: #8b949e;
-    }
+.search-button {
+    padding: 12px 20px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.search-button:hover {
+    background: #1d4ed8;
+}
 
-    .recruiter-default-avatar {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: #30363d;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 12px;
-        border: 2px solid #58a6ff;
-        color: #f0f6fc;
-        font-size: 1.3em;
+/* === JOB CARD === */
+.job-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.job-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.job-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+}
+.job-meta {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+.job-description {
+    font-size: 15px;
+    color: #374151;
+    line-height: 1.6;
+}
+.job-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 15px 0;
+}
+.job-detail-item {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+/* === TAGS === */
+.skill-tag {
+    display: inline-block;
+    background: #f3f4f6;
+    color: #374151;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    margin: 2px 4px 2px 0;
+}
+
+/* === APPLY BUTTON === */
+.apply-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+.apply-button:hover {
+    background: #1d4ed8;
+    text-decoration: none;
+    color: white;
+}
+
+/* === MATCH SCORE BADGES === */
+.match-high { 
+    background: #e0f2fe; 
+    color: #0369a1; 
+    padding: 4px 10px; 
+    border-radius: 12px; 
+}
+.match-medium { 
+    background: #fef3c7; 
+    color: #92400e; 
+    padding: 4px 10px; 
+    border-radius: 12px; 
+}
+.match-low { 
+    background: #fee2e2; 
+    color: #991b1b; 
+    padding: 4px 10px; 
+    border-radius: 12px; 
+}
+
+/* === RECRUITER PROFILE === */
+.recruiter-profile {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    margin-top: 15px;
+}
+.recruiter-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+}
+.recruiter-info h4 {
+    font-size: 15px;
+    margin: 0;
+    color: #1e293b;
+}
+.recruiter-info p {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 2px 0 0;
+}
+
+/* === SUCCESS / ERROR MESSAGE === */
+.success-message {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    border: 1px solid #bae6fd;
+    margin: 20px 0;
+}
+
+/* === FILE UPLOADER === */
+.uploadedFile {
+    background: #f9fafb !important;
+    border: 2px dashed #2563eb !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
+}
+
+/* === HIDE STREAMLIT DEFAULT === */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .block-container {
+        padding: 1rem 0.5rem;
     }
+    .job-details {
+        grid-template-columns: 1fr;
+    }
+    .hero-banner h1 {
+        font-size: 28px;
+    }
+}
+
 </style>
+
+<script>
+    // Connect HTML search inputs to Streamlit components
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search input connection
+        const searchInput = document.getElementById('search-input');
+        const locationFilter = document.getElementById('location-filter');
+        const typeFilter = document.getElementById('type-filter');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                // This would need Streamlit's session state to work properly
+                // For now, it's just visual enhancement
+            });
+        }
+
+        // Add smooth scrolling for job cards
+        const jobCards = document.querySelectorAll('.job-card');
+        jobCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px) scale(1.01)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    });
+</script>
 """, unsafe_allow_html=True)
 
 @st.cache_data
@@ -428,7 +593,16 @@ def process_cv_cached(file_content, file_name):
     if not cv_text.strip():
         return None, None
     cv_data = preprocess_cv(cv_text)
+
+    # ✅ Si preprocess_cv renvoie du JSON en string, on convertit en dict
+    if isinstance(cv_data, str):
+        try:
+            cv_data = json.loads(cv_data)
+        except:
+            cv_data = {}
+
     return cv_text, cv_data
+
 
 def parse_cv_from_content(file_content, file_name):
     """Parse CV à partir du contenu binaire"""
@@ -437,10 +611,184 @@ def parse_cv_from_content(file_content, file_name):
     file_obj.name = file_name
     return parse_cv(file_obj)
 
+def create_job_card_html(job):
+    """Create HTML for a modern job card"""
+    # Determine match score styling
+    match_score = job.get('match_score')
+    if match_score is not None:
+        if match_score >= 75:
+            match_class = "match-high"
+        elif match_score >= 50:
+            match_class = "match-medium"
+        else:
+            match_class = "match-low"
+        match_badge = f'<div class="match-score {match_class}">🎯 {match_score:.1f}% Match</div>'
+    else:
+        match_badge = ''
+
+    # Recruiter image
+    if job.get('recruiter_picture'):
+        recruiter_img = f'<img src="data:image/png;base64,{job["recruiter_picture"]}" class="recruiter-avatar">'
+    else:
+        recruiter_img = '<div class="recruiter-default-avatar"><i class="fas fa-user-tie"></i></div>'
+
+    # Matched skills
+    matched_section = ''
+    if job.get('matched_skills'):
+        matched_tags = ''.join([f'<span class="skill-tag" style="background:#dcfce7;color:#166534;border-color:#86efac;">{skill}</span>' for skill in job['matched_skills'][:3]])
+        matched_section = f'<div style="margin: 16px 0;"><strong>✅ Matched Skills:</strong> {matched_tags}</div>'
+
+    # Skills tags
+    skills_html = ''
+    if job.get('skills'):
+        skills_html = ''.join([f'<span class="skill-tag">{skill}</span>' for skill in job['skills'][:6]])
+
+    # Salary
+    if job.get('salary_from'):
+        salary_text = f"{job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}"
+    else:
+        salary_text = "Not specified"
+
+    # External link
+    external_link = ''
+    if job.get('apply_url'):
+        external_link = f'<a href="{job["apply_url"]}" style="color: #667eea; text-decoration: none; font-weight: 500;" target="_blank">🔗 External Link</a>'
+
+    # Description
+    description = job['description'][:200] + "..." if len(job['description']) > 200 else job['description']
+
+    html = f"""
+    <div class="job-card">
+        <div class="recruiter-profile">
+            {recruiter_img}
+            <div class="recruiter-info">
+                <h4 onclick="window.location.href='?recruiter={job['recruiter_id']}'">{job['recruiter_name']}</h4>
+                <p>Posted {job['posted']}</p>
+            </div>
+        </div>
+
+        <h2 class="job-title">{job['title']}</h2>
+        <div class="job-meta">
+            <span>🏢 {job['company_name']}</span>
+            <span>📍 {job['location']}</span>
+            <span>💼 {job['type']}</span>
+        </div>
+
+        {match_badge}
+
+        {matched_section}
+
+        <div class="job-description">
+            {description}
+        </div>
+
+        <div class="job-details">
+            <div class="job-detail-item">
+                <span>💰</span>
+                <span><strong>Salary:</strong> {salary_text}</span>
+            </div>
+            <div class="job-detail-item">
+                <span>🛠️</span>
+                <span><strong>Skills:</strong></span>
+            </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+            {skills_html}
+        </div>
+
+        <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center;">
+            <a href="{job['apply_url'] or '#'}" class="apply-button" target="_blank">
+                🚀 Apply Now
+            </a>
+            {external_link}
+        </div>
+    </div>
+    """
+
+    return html
+
+def create_success_message_html(skills):
+    """Create HTML for success message with skills tags"""
+    skills_tags = ''.join([f'<span class="skill-tag" style="background:#e0f2fe;color:#0277bd;border-color:#90caf9;">{skill}</span>' for skill in skills])
+
+    html = f"""
+    <div class="success-message">
+        <div style="font-size: 18px; margin-bottom: 12px;">🎉 CV analysé avec succès !</div>
+        <div style="font-size: 14px; margin-bottom: 8px;"><strong>Compétences détectées :</strong></div>
+        <div>{skills_tags}</div>
+    </div>
+    """
+
+    return html
+
+def create_status_message_html(message_type, main_text, sub_text=""):
+    """Create HTML for status messages"""
+    if message_type == "success":
+        bg_color = "rgba(255,255,255,0.9)"
+        border_color = "#667eea"
+        text_color = "#1a202c"
+        sub_color = "#64748b"
+    elif message_type == "error":
+        bg_color = "rgba(254,226,226,0.9)"
+        border_color = "#dc2626"
+        text_color = "#991b1b"
+        sub_color = "#7f1d1d"
+    else:  # info
+        bg_color = "rgba(255,255,255,0.8)"
+        border_color = "transparent"
+        text_color = "#374151"
+        sub_color = "#6b7280"
+
+    sub_text_html = f'<div style="font-size: 14px; color: {sub_color}; margin-top: 4px;">{sub_text}</div>' if sub_text else ''
+
+    html = f"""
+    <div style="text-align: center; margin: 20px 0; padding: 16px; background: {bg_color}; border-radius: 12px; border-left: 4px solid {border_color};">
+        <div style="font-size: 18px; font-weight: 600; color: {text_color};">{main_text}</div>
+        {sub_text_html}
+    </div>
+    """
+
+    return html
+
 @st.cache_data
 def process_job_matching(cv_data, jobs_data):
-    """Cache le matching des jobs"""
-    return match_jobs(cv_data, jobs_data)
+    """Filtrer et scorer les jobs qui matchent avec le CV"""
+
+    # 🔧 Étape 1 : normaliser les jobs
+    flat_jobs = []
+    for job in jobs_data:
+        if isinstance(job, dict) and "skills" in job:
+            flat_jobs.append(job)
+        elif isinstance(job, dict) and "jobs" in job:
+            for subjob in job["jobs"]:
+                subjob = subjob.copy()
+                subjob["company_name"] = job["company"]
+                subjob["url"] = subjob.get("url", job.get("url"))
+                flat_jobs.append(subjob)
+
+    # ✅ Normalisation des skills
+    cv_data["skills"] = [s.lower() for s in cv_data.get("skills", [])]
+    for job in flat_jobs:
+        if "skills" in job and isinstance(job["skills"], list):
+            job["skills"] = [s.lower() for s in job["skills"]]
+
+    # 🔧 Étape 2 : calculer les scores pour tous les jobs
+    from matching import compute_score
+    scored_jobs = []
+    for job in flat_jobs:
+        score, matched_skills = compute_score(cv_data, job.get("skills", []))
+        if score > 0:  # Seulement les jobs avec au moins un match
+            job_copy = job.copy()
+            job_copy["match_score"] = score
+            job_copy["matched_skills"] = matched_skills
+            scored_jobs.append(job_copy)
+
+    # 🔧 Étape 3 : trier par score décroissant et prendre top 3
+    scored_jobs.sort(key=lambda j: j["match_score"], reverse=True)
+    return scored_jobs[:3]
+
+
 
 # ========== FONCTIONS CACHÉES ==========
 def get_pdf_files_info():
@@ -692,24 +1040,123 @@ if st.session_state.user is None:
         tab1, tab2 = st.tabs(["🔍 Browse Jobs", "🔐 Login"])
 
         with tab1:
-            st.markdown('<div class="main-title"><i class="fas fa-briefcase icon-large"></i><h1 style="margin: 0;">Find Your Dream Job</h1></div>', unsafe_allow_html=True)
-        st.markdown("Discover exciting opportunities from top companies")
+            st.markdown("""
+            <div style="text-align: center; margin-bottom: 40px; color: #fff;">
+                <h1 style="font-size: 3.5em; font-weight: 700; margin: 0; text-shadow: 2px 2px 4px #000;">🎯 Find Your Dream Job</h1>
+                <p style="font-size: 1.2em; color: #eee;">Discover exciting opportunities from top companies</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+                                
+        
 
         # Get all jobs for public browsing
         jobs = db.get_all_jobs()
 
         if jobs:
-            # Search and filter options
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                search_term = st.text_input("Search jobs", placeholder="Job title, company, or skills")
-            with col2:
-                location_filter = st.selectbox("Location", ["All"] + list(set([job['location'] for job in jobs if job['location']])))
-            with col3:
-                type_filter = st.selectbox("Job Type", ["All"] + list(set([job['type'] for job in jobs if job['type']])))
+            # Modern Search Bar
+            st.markdown("""
+            <div class="search-container">
+                <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 200px;">
+                        <input type="text" class="search-input" placeholder="🔍 Job title, company, or skills" id="search-input">
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <select class="search-select" id="location-filter">
+                            <option value="All">🌍 All Locations</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <select class="search-select" id="type-filter">
+                            <option value="All">💼 All Types</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="file" accept=".pdf,.docx" style="display: none;" id="cv-upload">
+                        <label for="cv-upload" class="apply-button" style="margin: 0; cursor: pointer;">
+                            📄 Upload CV
+                        </label>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-            # Filter jobs
-            filtered_jobs = jobs
+            st.markdown("""
+            <style>
+            .search-container {
+                background-color: #f0f2f6;
+                padding: 1rem;
+                border-radius: 0.5rem;
+                margin-bottom: 2rem;
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+            }
+            .search-input {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+                margin-bottom: 0.5rem;
+                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            }
+            .search-input:focus {
+                border-color: #80bdff;
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+            st.markdown("""
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="🔍 Job title, company, or skills" id="search-input">
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Keep original Streamlit components for functionality (hidden)
+            search_term = st.text_input("Search jobs", placeholder="Job title, company, or skills", key="search_hidden", label_visibility="collapsed")
+            location_filter = st.selectbox("Location", ["All"] + list(set([job['location'] for job in jobs if job['location']])), key="location_hidden", label_visibility="collapsed")
+            type_filter = st.selectbox("Job Type", ["All"] + list(set([job['type'] for job in jobs if job['type']])), key="type_hidden", label_visibility="collapsed")
+            uploaded_cv = st.file_uploader("Upload CV", type=["pdf", "docx"], key="job_match_cv", label_visibility="collapsed")
+            # Initialize variables
+            cv_data = None
+            matched_jobs = []
+
+            if uploaded_cv is not None:
+                try:
+                    file_content = uploaded_cv.read()
+                    file_name = uploaded_cv.name
+                    cv_text, cv_data = process_cv_cached(file_content, file_name)
+
+                    # Debug logging
+                    print(f"DEBUG: cv_data = {cv_data}")
+                    print(f"DEBUG: cv_data type = {type(cv_data)}")
+                    if cv_data:
+                        print(f"DEBUG: cv_data.get('skills') = {cv_data.get('skills')}")
+                        print(f"DEBUG: len(cv_data.get('skills', [])) = {len(cv_data.get('skills', []))}")
+
+                    if cv_data and cv_data.get("skills") and len(cv_data.get("skills", [])) > 0:
+                        success_html = create_success_message_html(cv_data.get("skills", []))
+                        st.markdown(success_html, unsafe_allow_html=True)
+
+                        matched_jobs = process_job_matching(cv_data, jobs)
+                    else:
+                        st.warning("⚠️ CV analysé mais aucune compétence détectée. Affichage de tous les jobs.")
+                        matched_jobs = []
+                except Exception as e:
+                    st.error(f"Erreur lors du traitement du CV : {e}")
+                    st.info("ℹ️ Affichage de tous les jobs disponibles malgré l'erreur.")
+                    matched_jobs = []
+
+            # Filter jobs based on CV matching or regular filters
+            if uploaded_cv is not None and cv_data and matched_jobs:
+                # Use CV-matched jobs as base, then apply additional filters
+                base_jobs = matched_jobs
+            else:
+                # Use all jobs as base
+                base_jobs = jobs
+
+            # Apply search/location/type filters
+            filtered_jobs = base_jobs
             if search_term:
                 filtered_jobs = [job for job in filtered_jobs if
                     search_term.lower() in job['title'].lower() or
@@ -723,57 +1170,81 @@ if st.session_state.user is None:
             if type_filter != "All":
                 filtered_jobs = [job for job in filtered_jobs if job['type'] == type_filter]
 
-            st.markdown(f"**Found {len(filtered_jobs)} job(s)**")
+            # Show modern status message
+            if uploaded_cv is not None and cv_data:
+                if matched_jobs:
+                    status_html = create_status_message_html("success", f"🎯 {len(filtered_jobs)} job(s) recommandé(s) basé sur votre CV", "Triés par pertinence de matching")
+                else:
+                    status_html = create_status_message_html("error", "❌ Aucun job compatible trouvé avec vos compétences", "Essayez d'actualiser votre CV ou élargissez vos critères")
+            else:
+                status_html = create_status_message_html("info", f"📋 {len(filtered_jobs)} job(s) disponible(s)")
 
-            # Display jobs as posts
+            st.markdown(status_html, unsafe_allow_html=True)
+
+            # Display jobs as modern cards
             for job in filtered_jobs:
+                # Use Streamlit components instead of complex HTML
                 with st.container():
-                    # Recruiter profile section - Circular image with small clickable name
-                    st.markdown(f"""
-                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        {'<img src="data:image/png;base64,' + job['recruiter_picture'] + '" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 10px;">' if job.get('recruiter_picture') else '<div style="width: 45px; height: 45px; border-radius: 50%; background: #30363d; display: flex; align-items: center; justify-content: center; margin-right: 10px;"><i class="fas fa-user-tie" style="font-size: 1.3em; color: #f0f6fc;"></i></div>'}
-                        <button onclick="window.location.href='?recruiter={job['recruiter_id']}'" style="background: none; border: none; color: #0066cc; cursor: pointer; font-size: 0.9em; font-weight: 600; padding: 0; text-decoration: underline; margin-right: 10px;">{job['recruiter_name']}</button>
-                        <span style="font-size: 0.8em; color: #666;">Posted {job['posted']}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    # Job post styling
-                    if job['job_image']:
-                        # Job with image
-                        col1, col2 = st.columns([1, 2])
+                    # Recruiter profile
+                    if job.get('recruiter_picture'):
+                        col1, col2 = st.columns([1, 4])
                         with col1:
-                            st.image(f"data:image/png;base64,{job['job_image']}", width='stretch')
+                            st.image(f"data:image/png;base64,{job['recruiter_picture']}", width=50)
                         with col2:
-                            st.markdown(f"### {job['title']}")
-                            st.markdown(f"**🏢 {job['company_name']}** • **📍 {job['location']}** • **💼 {job['type']}**")
-                            st.markdown(f"**Posted:** {job['posted']}")
-                            if job['salary_from']:
-                                st.markdown(f"**💰 Salary:** {job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}")
-                            if job['skills']:
-                                st.markdown(f"**🛠️ Skills:** {', '.join(job['skills'][:5])}")
-                            st.markdown(job['description'][:200] + "..." if len(job['description']) > 200 else job['description'])
+                            st.markdown(f"**{job['recruiter_name']}** - Posted {job['posted']}")
                     else:
-                        # Job without image
-                        st.markdown("---")
-                        st.markdown(f"### {job['title']}")
-                        st.markdown(f"**🏢 {job['company_name']}** • **📍 {job['location']}** • **💼 {job['type']}**")
-                        st.markdown(f"**Posted:** {job['posted']}")
-                        if job['salary_from']:
-                            st.markdown(f"**💰 Salary:** {job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}")
-                        if job['skills']:
-                            st.markdown(f"**🛠️ Skills:** {', '.join(job['skills'][:5])}")
-                        st.markdown(job['description'][:300] + "..." if len(job['description']) > 300 else job['description'])
+                        st.markdown(f"**{job['recruiter_name']}** - Posted {job['posted']}")
 
-                    # Apply section - Always show internal application form
-                    col1, col2 = st.columns([3, 1])
+                    # Job title with gradient effect
+                    st.markdown(f"### {job['title']}")
+
+                    # Job meta info
+                    col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.markdown("**📝 Apply for this position**")
+                        st.markdown(f"🏢 {job['company_name']}")
                     with col2:
-                        if job['apply_url']:
-                            st.markdown(f"[🔗 External Link]({job['apply_url']})")
+                        st.markdown(f"📍 {job['location']}")
+                    with col3:
+                        st.markdown(f"💼 {job['type']}")
 
-                    # Create application form for direct application
-                    with st.expander("📄 Submit Your Application", expanded=False):
+                    # Matching score badge
+                    if job.get('match_score') is not None:
+                        score_color = "🟢" if job['match_score'] >= 75 else "🟡" if job['match_score'] >= 50 else "🔴"
+                        st.markdown(f"{score_color} **{job['match_score']:.1f}% Match**")
+
+                    # Matched skills
+                    if job.get('matched_skills'):
+                        matched_tags = " ".join([f"`{skill}`" for skill in job['matched_skills'][:3]])
+                        st.markdown(f"**✅ Matched Skills:** {matched_tags}")
+
+                    # Job description
+                    st.markdown(job['description'][:200] + "..." if len(job['description']) > 200 else job['description'])
+
+                    # Job details
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        salary = f"{job['salary_currency']} {job['salary_from']:,} - {job['salary_to']:,}" if job.get('salary_from') else "Not specified"
+                        st.markdown(f"**💰 Salary:** {salary}")
+                    with col2:
+                        if job.get('skills'):
+                            skills_display = ", ".join(job['skills'][:5])
+                            st.markdown(f"**🛠️ Skills:** {skills_display}")
+
+                    # Skills as tags
+                    if job.get('skills'):
+                        tags_html = "".join([f'<span style="background:#f1f5f9;color:#475569;padding:4px 8px;border-radius:12px;font-size:12px;margin:2px;">{skill}</span>' for skill in job['skills'][:6]])
+                        st.markdown(f'<div style="margin:12px 0;">{tags_html}</div>', unsafe_allow_html=True)
+
+                    # Apply button
+                    if job.get('apply_url'):
+                        st.markdown(f"[🚀 Apply Now]({job['apply_url']})")
+                    else:
+                        st.button("🚀 Apply Now", disabled=True)
+
+                    st.markdown("---")
+
+                # Application form (keep original functionality)
+                with st.expander("📄 Submit Your Application", expanded=False):
                         with st.form(f"apply_{job['id']}"):
                             applicant_name = st.text_input("Full Name")
                             applicant_email = st.text_input("Email")
