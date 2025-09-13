@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - Entretien Automatisé{% endblock %}
+
+{% block content %}
+<div class="main-title">
+    <h1>👨‍💼 Admin Dashboard</h1>
+    <p>System management and oversight</p>
+</div>
+
+<!-- Statistics Overview -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="job-card text-center">
+            <h3>{{ total_candidates }}</h3>
+            <p>Total Candidates</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="job-card text-center">
+            <h3>{{ completed_tests }}</h3>
+            <p>Completed Tests</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="job-card text-center">
+            <h3>{{ "%.1f"|format(completion_rate) }}%</h3>
+            <p>Completion Rate</p>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Tabs -->
+<div class="tabs">
+    <button type="button" class="tab-button active" data-tab="recruiters">Recruiters</button>
+    <button type="button" class="tab-button" data-tab="candidates">Candidates</button>
+    <button type="button" class="tab-button" data-tab="system">System</button>
+</div>
+
+<!-- Recruiters Tab -->
+<div id="recruiters" class="tab-content">
+    <div class="job-card">
+        <h3>👥 Recruiters Management</h3>
+        <a href="#" class="apply-button mb-3">+ Add New Recruiter</a>
+
+        {% if recruiters %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for recruiter in recruiters %}
+                    <tr>
+                        <td>{{ recruiter.id }}</td>
+                        <td>{{ recruiter.username }}</td>
+                        <td>{{ recruiter.email }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No recruiters found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Candidates Tab -->
+<div id="candidates" class="tab-content" style="display: none;">
+    <div class="job-card">
+        <h3>👨‍🎓 Candidates Overview</h3>
+
+        {% if candidates %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Recruiter</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for candidate in candidates %}
+                    <tr>
+                        <td>{{ candidate.id }}</td>
+                        <td>{{ candidate.username }}</td>
+                        <td>{{ candidate.email }}</td>
+                        <td>{{ candidate.recruiter_name or 'N/A' }}</td>
+                        <td>
+                            {% if candidate.test_completed %}
+                            <span class="badge bg-success">Completed</span>
+                            {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No candidates found in the system.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- System Tab -->
+<div id="system" class="tab-content" style="display: none;">
+    <div class="job-card">
+        <h3>⚙️ System Information</h3>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Database Status</h4>
+                <p>✅ Database connection: Active</p>
+                <p>📊 Tables: Initialized</p>
+            </div>
+            <div class="col-md-6">
+                <h4>AI Services</h4>
+                <p>🤖 Gemini AI: Connected</p>
+                <p>📚 Vector Store: Ready</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <h4>System Actions</h4>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary">Refresh Cache</button>
+            <button class="btn btn-outline-secondary">Export Data</button>
+            <button class="btn btn-outline-warning">System Logs</button>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Button -->
+<div class="text-center mt-4">
+    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+</div>
+
+<style>
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px 30px -15px;
+}
+
+.col-md-4, .col-md-6 {
+    padding: 0 15px;
+    margin-bottom: 30px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 0.875rem;
+}
+
+.btn-outline-primary {
+    color: #667eea;
+    border-color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background-color: #667eea;
+    color: white;
+}
+
+.btn-outline-secondary {
+    color: #6b7280;
+    border-color: #6b7280;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6b7280;
+    color: white;
+}
+
+.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-outline-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.bg-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.bg-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+    .col-md-4, .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .d-flex {
+        flex-direction: column;
+    }
+}
+</style>
+
+{% block scripts %}
+<script>
+// Tab functionality
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+        // Show selected tab content
+        const tabId = this.getAttribute('data-tab');
+        document.getElementById(tabId).style.display = 'block';
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

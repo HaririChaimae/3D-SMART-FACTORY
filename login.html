@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Login - Entretien Automatisé{% endblock %}
+
+{% block content %}
+<div class="main-title">
+    <h1>🔐 Login</h1>
+    <p>Access your dashboard</p>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="job-card">
+                <h3 class="text-center mb-3">Select your role:</h3>
+
+                <!-- Role Selection Tabs -->
+                <div class="tabs">
+                    <button type="button" class="tab-button active" data-tab="recruiter-tab">Recruiter</button>
+                    <button type="button" class="tab-button" data-tab="admin-tab">Admin</button>
+                </div>
+
+                <!-- Recruiter Login Tab -->
+                <div id="recruiter-tab" class="tab-content">
+                    <div class="mt-4">
+                        <form method="POST" action="{{ url_for('recruiter_login') }}">
+                            <div class="form-group">
+                                <label for="recruiter-email">Email</label>
+                                <input type="email" id="recruiter-email" name="email" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="recruiter-password">Password</label>
+                                <input type="password" id="recruiter-password" name="password" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary w-100">Login as Recruiter</button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <p>Don't have an account? <a href="#" onclick="showRegister()">Register here</a></p>
+                        </div>
+
+                        <!-- Register Form (hidden by default) -->
+                        <div id="register-form" style="display: none;">
+                            <hr>
+                            <h4>Register New Recruiter</h4>
+                            <form method="POST" action="{{ url_for('recruiter_register') }}">
+                                <div class="form-group">
+                                    <label for="reg-username">Username</label>
+                                    <input type="text" id="reg-username" name="username" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-email">Email</label>
+                                    <input type="email" id="reg-email" name="email" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-password">Password</label>
+                                    <input type="password" id="reg-password" name="password" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-secondary w-100">Register</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Login Tab -->
+                <div id="admin-tab" class="tab-content" style="display: none;">
+                    <div class="mt-4">
+                        <form method="POST" action="{{ url_for('admin_login') }}">
+                            <div class="form-group">
+                                <label for="admin-email">Admin Email</label>
+                                <input type="email" id="admin-email" name="email" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-password">Admin Password</label>
+                                <input type="password" id="admin-password" name="password" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary w-100">Login as Admin</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================== STYLES ================== -->
+<style>
+/* --- Fond de page moderne --- */
+body {
+    background: linear-gradient(135deg, #6c63ff, #42a5f5);
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* --- Carte du formulaire --- */
+.job-card {
+    background: #fff;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    transition: transform .2s ease;
+}
+.job-card:hover {
+    transform: translateY(-5px);
+}
+
+/* --- Titre --- */
+.main-title h1 {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #fff;
+    margin-top: 30px;
+}
+.main-title p {
+    text-align: center;
+    color: #eee;
+    margin-bottom: 20px;
+}
+
+/* --- Onglets --- */
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    gap: 10px;
+}
+.tab-button {
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: none;
+    background: #f0f0f0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+.tab-button.active {
+    background: #6c63ff;
+    color: white;
+    box-shadow: 0px 4px 12px rgba(108, 99, 255, 0.4);
+}
+.tab-button:hover {
+    background: #6c63ff;
+    color: white;
+}
+
+/* --- Formulaire --- */
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+}
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 100%;
+    transition: 0.3s;
+}
+.form-control:focus {
+    border-color: #6c63ff;
+    box-shadow: 0px 0px 8px rgba(108, 99, 255, 0.3);
+    outline: none;
+}
+
+/* --- Boutons --- */
+.btn {
+    border-radius: 25px;
+    padding: 12px;
+    font-weight: bold;
+    transition: 0.3s ease;
+}
+.btn-primary {
+    background: #6c63ff;
+    border: none;
+}
+.btn-primary:hover {
+    background: #574bdb;
+}
+.btn-secondary {
+    background: #f39c12;
+    border: none;
+}
+.btn-secondary:hover {
+    background: #d68910;
+}
+
+/* --- Alignement --- */
+.text-center {
+    text-align: center;
+}
+.w-100 {
+    width: 100% !important;
+}
+.mt-3 {
+    margin-top: 1rem;
+}
+.mt-4 {
+    margin-top: 1.5rem;
+}
+</style>
+
+<!-- ================== SCRIPTS ================== -->
+{% block scripts %}
+<script>
+function showRegister() {
+    document.getElementById('register-form').style.display = 'block';
+}
+
+// Tab functionality
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+        // Show selected tab content
+        const tabId = this.getAttribute('data-tab');
+        document.getElementById(tabId).style.display = 'block';
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

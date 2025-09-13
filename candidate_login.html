@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Connexion Candidat - Test Technique{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section style="padding: 4rem 0; background: linear-gradient(135deg, var(--gray-50), var(--gray-100)); border-bottom: 1px solid var(--gray-200);">
+    <div class="container">
+        <div class="fade-in-up" style="text-align: center;">
+            <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--gray-800); margin-bottom: 1rem;">
+                <i class="fas fa-user-graduate" style="color: var(--primary-color); margin-right: 0.5rem;"></i>
+                Test Technique
+            </h1>
+            <p style="font-size: 1.2rem; color: var(--gray-600); max-width: 600px; margin: 0 auto;">
+                Connectez-vous pour accéder à votre test d'entretien technique
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Login Form -->
+<section style="padding: 3rem 0;">
+    <div class="container">
+        <div style="max-width: 500px; margin: 0 auto;">
+            <div class="card-professional slide-in-up">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <i class="fas fa-key" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-800); margin: 0;">
+                        Connexion au Test
+                    </h2>
+                    <p style="color: var(--gray-600); margin: 0.5rem 0 0 0;">
+                        Utilisez les identifiants reçus par email
+                    </p>
+                </div>
+
+                <form method="POST" style="padding: 0;">
+                    <div class="form-group-professional">
+                        <label class="form-label-professional">
+                            <i class="fas fa-envelope" style="margin-right: 0.5rem;"></i>
+                            Email
+                        </label>
+                        <input type="email" name="email" class="form-input-professional" required
+                               placeholder="votre.email@example.com"
+                               value="{{ prefilled_email }}">
+                    </div>
+
+                    <div class="form-group-professional">
+                        <label class="form-label-professional">
+                            <i class="fas fa-lock" style="margin-right: 0.5rem;"></i>
+                            Mot de passe
+                        </label>
+                        <input type="password" name="password" class="form-input-professional" required
+                               placeholder="Votre mot de passe">
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button type="submit" class="btn-professional" style="width: 100%; background: linear-gradient(135deg, var(--success-color), #059669);">
+                            <i class="fas fa-sign-in-alt"></i> Se connecter au Test
+                        </button>
+                    </div>
+                </form>
+
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--gray-200);">
+                    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 1rem;">
+                        <h4 style="font-size: 1rem; font-weight: 600; color: var(--primary-color); margin: 0 0 0.5rem 0;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                            Informations
+                        </h4>
+                        <ul style="margin: 0; padding-left: 1.5rem; color: var(--gray-600); font-size: 14px;">
+                            <li style="margin-bottom: 0.5rem;">Le test contient plusieurs exercices de programmation</li>
+                            <li style="margin-bottom: 0.5rem;">Vous avez du temps pour résoudre chaque problème</li>
+                            <li style="margin-bottom: 0.5rem;">Vos réponses seront automatiquement évaluées</li>
+                            <li>Le résultat sera envoyé au recruteur</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: center;">
+                    <a href="{{ url_for('jobs') }}" class="btn-professional" style="background: var(--gray-500);">
+                        <i class="fas fa-arrow-left"></i> Retour aux offres
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .form-group-professional {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label-professional {
+        display: block;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 0.5rem;
+        font-size: 14px;
+    }
+
+    .form-input-professional {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid var(--gray-200);
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .form-input-professional:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .card-professional {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

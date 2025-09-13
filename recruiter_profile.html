@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ recruiter.username }} - Recruiter Profile{% endblock %}
+
+{% block content %}
+<!-- Recruiter Profile Header -->
+<div style="display: flex; align-items: center; margin-bottom: 30px; padding: 20px; background: #000000; border-radius: 15px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    {% if recruiter.profile_picture %}
+    <img src="data:image/png;base64,{{ recruiter.profile_picture }}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-right: 25px; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+    {% else %}
+    <div style="width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin-right: 25px; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        <i class="fas fa-user-tie" style="font-size: 3em; color: white;"></i>
+    </div>
+    {% endif %}
+    <div>
+        <h1 style="margin: 0; font-size: 2.5em; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">{{ recruiter.username }}</h1>
+        <p style="margin: 8px 0; font-size: 1.2em; opacity: 0.9; color: #e0e0e0;">Senior Recruiter</p>
+        <p style="margin: 5px 0; font-size: 1.1em; color: #cccccc;"><i class="fas fa-envelope"></i> {{ recruiter.email }}</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="job-card text-center">
+            <h3>{{ total_jobs }}</h3>
+            <p>Jobs Posted</p>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="job-card text-center">
+            <h3>{{ total_applications }}</h3>
+            <p>Total Applications</p>
+        </div>
+    </div>
+</div>
+
+<!-- Job Postings Section -->
+{% if jobs %}
+<div class="job-card">
+    <h3>💼 All Job Postings</h3>
+
+    {% for job in jobs %}
+    <div class="job-card" style="margin-bottom: 20px; border-left: 4px solid #667eea;">
+        <details>
+            <summary style="cursor: pointer; font-weight: bold; font-size: 18px;">
+                📋 {{ job.title }} at {{ job.company_name }}
+            </summary>
+
+            <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                {% if job.job_image %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <img src="data:image/png;base64,{{ job.job_image }}" style="width: 100%; border-radius: 8px;" alt="Job Image">
+                    </div>
+                    <div class="col-md-8">
+                        <p><strong>Location:</strong> {{ job.location }}</p>
+                        <p><strong>Type:</strong> {{ job.type }}</p>
+                        <p><strong>Posted:</strong> {{ job.posted }}</p>
+                        {% if job.salary_from %}
+                        <p><strong>Salary:</strong> {{ job.salary_currency }} {{ "{:,}".format(job.salary_from) }} - {{ "{:,}".format(job.salary_to) }}</p>
+                        {% endif %}
+                        {% if job.skills %}
+                        <p><strong>Skills:</strong> {{ job.skills[:3]|join(', ') }}{% if job.skills|length > 3 %}...{% endif %}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p><strong>Location:</strong> {{ job.location }}</p>
+                <p><strong>Type:</strong> {{ job.type }}</p>
+                <p><strong>Posted:</strong> {{ job.posted }}</p>
+                {% if job.salary_from %}
+                <p><strong>Salary:</strong> {{ job.salary_currency }} {{ "{:,}".format(job.salary_from) }} - {{ "{:,}".format(job.salary_to) }}</p>
+                {% endif %}
+                {% if job.skills %}
+                <p><strong>Skills:</strong> {{ job.skills[:3]|join(', ') }}{% if job.skills|length > 3 %}...{% endif %}</p>
+                {% endif %}
+                {% endif %}
+
+                <p><strong>Description:</strong> {{ job.description[:200] }}{{ '...' if job.description|length > 200 else '' }}</p>
+
+                <!-- Applications Count -->
+                {% set applications = [] %}
+                {% for app in [] %}  {# This would need to be passed from the route #}
+                {% if app.job_id == job.id %}
+                {% set _ = applications.append(app) %}
+                {% endif %}
+                {% endfor %}
+                <p><strong>Applications Received:</strong> {{ applications|length }}</p>
+            </div>
+        </details>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    No job postings found for this recruiter.
+</div>
+{% endif %}
+
+<!-- Back Button -->
+<div class="text-center mt-4">
+    <a href="{{ url_for('jobs') }}" class="apply-button">← Back to Job Search</a>
+</div>
+
+<style>
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px 30px -15px;
+}
+
+.col-md-6, .col-md-4, .col-md-8 {
+    padding: 0 15px;
+    margin-bottom: 30px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+details {
+    border: none;
+}
+
+summary {
+    list-style: none;
+}
+
+summary::-webkit-details-marker {
+    display: none;
+}
+
+summary::marker {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .col-md-6, .col-md-4, .col-md-8 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}
