@@ -23,7 +23,7 @@
         <form method="POST" action="{{ url_for('submit_candidate_test') }}" style="max-width: 1000px; margin: 0 auto;">
             {% for question in questions %}
             <div class="card-professional slide-in-left" style="margin-bottom: 2rem;">
-                <div style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 1.5rem; border-radius: 16px 16px 0 0; margin: -2rem -2rem 2rem -2rem;">
+                <div style="background: var(--primary-color); color: white; padding: 1.5rem; border-radius: 16px 16px 0 0; margin: -2rem -2rem 2rem -2rem;">
                     <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0;">
                         <i class="fas fa-question-circle" style="margin-right: 0.5rem;"></i>
                         Question {{ loop.index }}
@@ -55,7 +55,7 @@ print(f'Résultat: {result}')"></textarea>
             {% endfor %}
 
             <!-- Submit Section -->
-            <div class="card-professional slide-in-up" style="background: linear-gradient(135deg, var(--success-color), #059669); color: white; text-align: center;">
+            <div class="card-professional slide-in-up" style="background: var(--primary-color); color: white; text-align: center;">
                 <div style="padding: 2rem;">
                     <i class="fas fa-paper-plane" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.9;"></i>
                     <h3 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 1rem 0;">
@@ -64,7 +64,7 @@ print(f'Résultat: {result}')"></textarea>
                     <p style="margin: 0 0 2rem 0; opacity: 0.9;">
                         Une fois soumis, votre test sera automatiquement évalué et les résultats envoyés au recruteur.
                     </p>
-                    <button type="submit" class="btn-professional" style="background: white; color: var(--success-color); border: 2px solid white;">
+                    <button type="submit" class="btn-professional" style="background: white; color: var(--primary-color); border: 2px solid white;">
                         <i class="fas fa-check-circle"></i> Soumettre le Test
                     </button>
                 </div>
@@ -106,7 +106,7 @@ print(f'Résultat: {result}')"></textarea>
     .form-input-professional:focus {
         outline: none;
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
     }
 
     .code-editor {

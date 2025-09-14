@@ -4,23 +4,23 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section" style="padding: 8rem 0; text-align: center; color: white; position: relative; overflow: hidden;">
-    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(139, 92, 246, 0.9)); z-index: -1;"></div>
-    <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%); animation: pulse 4s infinite;"></div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(51, 51, 51, 0.9)); z-index: -1;"></div>
+  <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%); animation: pulse 4s infinite;"></div>
 
     <div class="container">
         <div class="hero-content fade-in-up">
-            <h1 style="font-size: 4rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.1;">
-                Révolutionnez votre <span style="background: linear-gradient(135deg, #06b6d4, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">recrutement</span> avec l'IA
+            <h1 style="font-size: 3.5rem; font-weight: 700; margin-bottom: 1.5rem; line-height: 1.2;">
+                Optimisez votre <span style="color: white">recrutement</span> avec l'IA
             </h1>
-            <p style="font-size: 1.5rem; margin-bottom: 2.5rem; opacity: 0.9; max-width: 600px; margin-left: auto; margin-right: auto;">
-                Connectez les meilleurs talents avec les entreprises grâce à notre plateforme de recrutement alimentée par l'intelligence artificielle.
+            <p style="font-size: 1.25rem; margin-bottom: 2.5rem; opacity: 0.9; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                Une solution complète de recrutement intelligent combinant matching algorithmique, analyse de CV et évaluation automatisée.
             </p>
             <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="{{ url_for('jobs') }}" class="btn-professional" style="font-size: 18px; padding: 1.25rem 2.5rem;">
-                    <i class="fas fa-search"></i> Découvrir les offres
+                <a href="{{ url_for('jobs') }}" class="btn-professional" style="font-size: 16px; padding: 1rem 2rem; background: var(--primary-color); border: none;">
+                    <i class="fas fa-search"></i> Explorer les offres
                 </a>
-                <a href="{{ url_for('login') }}" class="btn-professional" style="background: linear-gradient(135deg, #06b6d4, #0891b2); font-size: 18px; padding: 1.25rem 2.5rem;">
-                    <i class="fas fa-user-tie"></i> Espace Recruteur
+                <a href="{{ url_for('login') }}" class="btn-professional" style="font-size: 16px; padding: 1rem 2rem; background: var(--secondary-color); border: none;">
+                    <i class="fas fa-user-tie"></i> Accès recruteur
                 </a>
             </div>
         </div>
@@ -71,7 +71,7 @@
             <!-- Feature 1 -->
             <div class="card-professional slide-in-left">
                 <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);">
+                    <div style="width: 80px; height: 80px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);">
                         <i class="fas fa-upload" style="font-size: 2rem; color: white;"></i>
                     </div>
                     <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-800); margin-bottom: 1rem;">Upload Intelligent de CV</h3>
@@ -98,7 +98,7 @@
             <!-- Feature 2 -->
             <div class="card-professional slide-in-right">
                 <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--secondary-color), var(--accent-color)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);">
+                    <div style="width: 80px; height: 80px; background: var(--secondary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);">
                         <i class="fas fa-brain" style="font-size: 2rem; color: white;"></i>
                     </div>
                     <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-800); margin-bottom: 1rem;">Matching IA Avancé</h3>
@@ -125,7 +125,7 @@
             <!-- Feature 3 -->
             <div class="card-professional slide-in-left">
                 <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent-color), var(--primary-color)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3);">
+                    <div style="width: 80px; height: 80px; background: var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);">
                         <i class="fas fa-code" style="font-size: 2rem; color: white;"></i>
                     </div>
                     <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--gray-800); margin-bottom: 1rem;">Tests Techniques Automatisés</h3>
@@ -153,7 +153,7 @@
 </section>
 
 <!-- CTA Section -->
-<section style="padding: 5rem 0; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; text-align: center;">
+<section style="padding: 5rem 0; background: var(--primary-color); color: white; text-align: center;">
     <div class="container">
         <div class="fade-in-up">
             <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">
@@ -163,11 +163,11 @@
                 Rejoignez des centaines d'entreprises qui font confiance à notre plateforme
             </p>
             <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="{{ url_for('jobs') }}" class="btn-professional" style="background: white; color: var(--primary-color); border: 2px solid white;">
-                    <i class="fas fa-rocket"></i> Commencer maintenant
+                <a href="{{ url_for('jobs') }}" class="btn-professional" style="background: white; color: var(--primary-color); border: 2px solid white; font-weight: 500;">
+                    <i class="fas fa-play-circle"></i> Démarrer
                 </a>
-                <a href="#contact" class="btn-professional" style="background: transparent; border: 2px solid white;">
-                    <i class="fas fa-phone"></i> Nous contacter
+                <a href="#contact" class="btn-professional" style="background: transparent; border: 2px solid white; font-weight: 500;">
+                    <i class="fas fa-envelope"></i> Contact
                 </a>
             </div>
         </div>
@@ -185,12 +185,12 @@
     }
 
     .stat-item {
-        padding: 2rem;
+        padding: 1.5rem;
         background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--gray-200);
-        transition: all 0.3s ease;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
     }
 
     .stat-item:hover {

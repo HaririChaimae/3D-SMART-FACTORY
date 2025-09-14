@@ -1,68 +1,45 @@
-Akeskous
-Osama
-Data Scientist and Software Engineering
-oussama.akeskous@gmail.com +212687162490 Agadir Osama Akeskous https://github.com/oussamaaxkos
-Master’s student in Information Systems and Intelligent Systems with a strong foundation in Data Science, experienced in web scraping, Power BI,
-and statistical analysis.
-Experiences
-Internship at ITINFODEV Company | Agadir (FSA Ibn Zohr) May 2024 - July 2024
-Developed a multilingual and multi-currency e-commerce website, built a real-time mobile app
-to analyze client behavior.
-Final-year internship at SALAM INFOTECH | Agadir (EST Essaouira). April 2023 - June 2023
-Collaborated with internal teams to develop a JavaFX desktop administration application with dynamic
-AJAX/jQuery-based UI and real-time visualization of customer behavior
-Introductory internship at CSN Morocco | Taliouine (EST Essaouira) April 2022 - June 2022
-Ensure proactive communication with clients to understand and analyze their needs and concerns.
-Design and development of a social media website aimed at facilitating communication between clients and the company.
-Use of front-end technologies (HTML, CSS, JavaScript) and back-end technologies (Flask, Oracle Database) to create an
-interactive and responsive platform.
-Academic Projects
-Sentiment Analysis of Customer Reviews for Bank Agencies in Morocco using a Modern Data Stack
-Automated data pipeline using Airflow, DBT, and PostgreSQL with a star schema model. Visualized insights in Looker Studio from reviews
-collected via web scraping (BeautifulSoup, Selenium).
-Work Opportunities Scraper with Web Integration
-Developed a job offer scraping system with BeautifulSoup, Selenium, and Airflow, integrating data into a real-time web platform.
-SmartShop: AI-Driven E-commerce Search | PFE – EST Essaouira
-Built with TensorFlow, CNN, and Flask for intelligent product search.
-Data Analysis Project: Application of PCA and AFC methods
-Used PCA and AFC with pandas, matplotlib, and seaborn to analyze and visualize multivariate data patterns.
-Home Price Prediction Using Linear Regression
-Cleaned data with Pandas and used Scikit-learn for linear regression. Deployed with a web interface for real-time predictions.
-Education
-National Institute of Statistics and Applied Economics | (INSEA) Rabat
-2024 - Present
-Master’s in Information Systems and Intelligent Systems
-Faculty of Sciences | (FSA) Agadir
-2023 - 2024
-Excellence Bachelor's Degree in Software Engineering
-Higher School of Technology | (EST) Essaouira
-2021 - 2023
-DUT Data Science
-Mohamed 6 High School | Taliouine
-2020 - 2021
-Baccalaureate in Physical Sciences and Chemistry
-skills
-Data Extraction
-Data Visualization
-Machine Learning and Deep Learning HTML, JSON, API REST
-Plotly and Seaborn / Power BI / Looker
-Sequence Models / Regression Techniques / Convolutional
-Neural Networks (CNNs) / LLMs Data Warehouse / Data Mining
-AI/ML Frameworks & Technologies ETL, OLAP & Data modeling
-Frameworks & Libraries Selenium, Playwright, BeautifulSoup, Scrapy
-SGBD
-TensorFlow, PyTorch, Scikit-learn
-Programming Languages Relational ( Oracle, MySQL) NoSQL
-(MongoDB)
-Data Analysis Python, JavaScript, C, JAVA, SQL
-Exploratory data analysis, feature engineering, and multivariate DevOps & Deployment
-analysis (ACP, AFC) using pandas, NumPy Scraping Docker (containerization), Git & GitHub
-Selenium, Playwright, BeautifulSoup, Scrapy
-Languages Certificates Areas of Interest
-Arabic : Native DeepSeek AI - Fundamentals of Large Self-learning
-Language Models (LLM)
-English : Very Good
-Content Creation
-Certificate in Deep Learning – Sequence
-French : Good Sport
-Models
+AAKKEESSKKOOUUSS AAbbddeellllaattiiff
+PROFIL
+Je suis très intéressé par llee ddoommaaiinnee ddee ggeessttiioonn ddeess eennttrreepprriisseess.. JJ’’aaii
+obtenu une lliicceennccee pprrooffeessssiioonnnneellllee eenn FFiinnance et Fiscalité, au même
+temps j’aaii ffaaiitt uunnee aauuttoo ffoorrmmaattiioonn ddaannss llee WWeebb ddéévveellooppppeemmeenntt,, jjee ssuuiiss
+CONTACT polyvalent eett aauussssii jjee mmaaîîttrriissee mmoonn ttrraavvaaiill. Je suis passionné et j’ai un
+bboonn sseennss rreellaattiioonnnneell qquuee jjee ssaauurraaii mmeettttrree aauu sseerrvviiccee ..ddee vvoottrree eennttrreepprriissee..
+Agadir FORMATION
++212 6 0 6 10 80 16
+Abdellat if.akeskos@gmail.com | 2021-2022
+linkedin.com/abdellatif-akeskous
+ Licence professionnelle Finance et Fiscalité des
+organisations.
+LANGUES
+FSJES Moulay ISMAIL, Meknès
+Arabe : Co urant | 2019-2021
+Tamazight : Courant  BRRVVEETT DDEE TTEECCHHNNIICCIIEENN SSUUPPÉÉRRIIEEUURREE ((BBTTSS)) GGeessttiioonn
+Français : Bon niveau ddeess ppeettiitteess eett mmooyyeennnneess eennttrreepprriisseess..
+Anglais : Bon niveau
+Centre BTS AL IDRISSI, Agadir
+COMPÉTENCES
+| 2018-2019
+ BBaaccccaallaauurrééaatt eenn sscciieennccee PPhhyyssiiqquuee eett cchhiimmiiqquuee..
+ Communication
+ Capacité d’adaptation Lycée MOHAMMED 6, Taliouine
+ Polyvalence
+EEXXPPEERRIIEENNCCEESS PPRROOFFEESSSSIIOONNNNEELLLLEESS
+ Autonomie
+11 MMooiiss ddee ssttaaggee eenn sseerrvviiccee ccoommppttaabbllee: CSN MAROC | 2022
+CENTRES D’INTÉRÊT Les travaux effectués:
+ LLAA SSAAIISSIIEE DDEESS EECCRRIITTUURREESS CCOOMMPPTTAABBLLEESS
+ Voyage  La déclaration fiscale IIRR,, IISS eett TTVVAA..
+ Sport 11 MMooiiss ddee ssttaaggee eenn sseerrvviiccee ccoommmmeerrcciiaall:: Dar Azaafran | 2021
+ Dessin Les travaux effectués:
+ La gestion et le Contrôle ddeess ssttoocckkss
+ Program mation 
+EXPERIENCES EXTRA-PPRROOFFEESSSSIIOONNNNEELLLLEESS
+LOGICIELS
+ Microsoft (Word, Excel, PowerPoint, Développement site web: CCooooppéérraattiivvee KKoouunnuuzz OOuurrttaannee | 2022
+Access)
+Lien : www.kunuzourtane.com
+ HTML5, CSS3, JavaScript, Python
+ WorPress, WooCommerce et Développement site web: CCooooppéérraattiivvee AAoouuddoosstt | 2022
+Wixsite.
+Lien : wwwwww..ccooooppeerraattiivveeaaoouuddoosstt..ccoomm

@@ -1614,12 +1614,13 @@ elif st.session_state.user_type == "recruiter":
 
     st.markdown("---")
 
-    # Show completed tests
-    completed_candidates = [c for c in candidates if c.get('test_completed')]
-    if completed_candidates:
-        st.markdown('<div class="section-header"><i class="fas fa-check-circle icon-medium"></i><h2 style="margin: 0;">Completed Tests</h2></div>', unsafe_allow_html=True)
+    # Show passed tests (candidates who submitted answers AND got passing score >= 5.0)
+    passing_threshold = 5.0
+    passed_candidates = [c for c in candidates if c.get('test_completed') and c.get('average_score', 0) >= passing_threshold]
+    if passed_candidates:
+        st.markdown('<div class="section-header"><i class="fas fa-trophy icon-medium"></i><h2 style="margin: 0;">Passed Tests (Score ≥ 5.0)</h2></div>', unsafe_allow_html=True)
 
-        for candidate in completed_candidates:
+        for candidate in passed_candidates:
             with st.expander(f"📊 {candidate['username']} - Score: {candidate.get('average_score', 0):.2f}", expanded=False):
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -1646,10 +1647,10 @@ elif st.session_state.user_type == "recruiter":
                     except:
                         st.write("Error loading detailed results")
 
-    # Show top 20% best candidates
-    if completed_candidates:
+    # Show top 20% best candidates (from those who passed)
+    if passed_candidates:
         # Sort by average score descending
-        sorted_candidates = sorted(completed_candidates, key=lambda x: x.get('average_score', 0), reverse=True)
+        sorted_candidates = sorted(passed_candidates, key=lambda x: x.get('average_score', 0), reverse=True)
         # Take top 20% (at least 1 if available)
         top_count = max(1, int(len(sorted_candidates) * 0.2))
         top_candidates = sorted_candidates[:top_count]
@@ -1968,13 +1969,38 @@ Recruitment Team
                     if job['apply_url']:
                         st.markdown(f"[Apply Here]({job['apply_url']})")
 
-                    # Delete button
-                    if st.button(f"🗑️ Delete Job", key=f"delete_job_{job['id']}", width='stretch'):
-                        try:
-                            db.delete_job(job['id'])
-                            st.success(f"Job '{job['title']}' deleted successfully!")
-                        except Exception as e:
-                            st.error(f"Error deleting job: {e}")
+                    # Delete button with confirmation
+                    st.markdown("---")
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write("**Delete this job:**")
+                    with col2:
+                        # Use a unique key for the delete confirmation
+                        delete_key = f"delete_confirm_{job['id']}"
+                        if delete_key not in st.session_state:
+                            st.session_state[delete_key] = False
+
+                        if st.button(f"🗑️ Delete", key=f"delete_job_{job['id']}", width='stretch'):
+                            st.session_state[delete_key] = True
+
+                        if st.session_state[delete_key]:
+                            st.warning(f"Are you sure you want to delete '{job['title']}'?")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                if st.button("Yes, Delete", key=f"confirm_delete_{job['id']}", type="primary"):
+                                    try:
+                                        db.delete_job(job['id'])
+                                        st.success(f"Job '{job['title']}' deleted successfully!")
+                                        st.session_state[delete_key] = False
+                                        time.sleep(1)  # Brief pause to show success message
+                                        st.rerun()  # Refresh the page to show updated job list
+                                    except Exception as e:
+                                        st.error(f"Error deleting job: {e}")
+                                        st.session_state[delete_key] = False
+                            with col2:
+                                if st.button("Cancel", key=f"cancel_delete_{job['id']}"):
+                                    st.session_state[delete_key] = False
+                                    st.rerun()
         else:
             st.info("No jobs found. Add your first job using the 'Add New Job' tab.")
 
@@ -2230,17 +2256,21 @@ elif st.session_state.user_type == "admin":
 
             # Summary statistics
             total_candidates = len(candidates)
-            completed_tests = sum(1 for c in candidates if c.get('test_completed'))
-            completion_rate = (completed_tests / total_candidates * 100) if total_candidates > 0 else 0
+            submitted_tests = sum(1 for c in candidates if c.get('test_completed'))
+            passed_tests = sum(1 for c in candidates if c.get('test_completed') and c.get('average_score', 0) >= 5.0)
+            submission_rate = (submitted_tests / total_candidates * 100) if total_candidates > 0 else 0
+            pass_rate = (passed_tests / total_candidates * 100) if total_candidates > 0 else 0
 
             st.markdown("### 📊 System Statistics")
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Total Candidates", total_candidates)
             with col2:
-                st.metric("Completed Tests", completed_tests)
+                st.metric("Submitted Tests", submitted_tests)
             with col3:
-                st.metric("Completion Rate", f"{completion_rate:.1f}%")
+                st.metric("Passed Tests (≥5.0)", passed_tests)
+            with col4:
+                st.metric("Pass Rate", f"{pass_rate:.1f}%")
 
         else:
             st.info("No candidates found in the system.")

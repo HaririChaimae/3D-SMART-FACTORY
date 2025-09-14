@@ -5,7 +5,7 @@
 {% block head %}
 <style>
     .application-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-color);
         color: white;
         padding: 60px 0;
         text-align: center;
@@ -61,9 +61,7 @@
         left: 0;
         right: 0;
         height: 6px;
-        background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
-        background-size: 300% 300%;
-        animation: gradientShift 3s ease infinite;
+        background: var(--primary-color);
     }
 
     @keyframes gradientShift {
@@ -76,14 +74,14 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: var(--primary-color);
         color: white;
         padding: 8px 16px;
         border-radius: 25px;
         font-weight: 600;
         font-size: 14px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     .job-meta-grid {
@@ -119,9 +117,9 @@
         font-size: 18px;
     }
 
-    .meta-icon.building { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
-    .meta-icon.location { background: linear-gradient(135deg, #10b981, #059669); color: white; }
-    .meta-icon.type { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+    .meta-icon.building { background: var(--primary-color); color: white; }
+    .meta-icon.location { background: var(--secondary-color); color: white; }
+    .meta-icon.type { background: var(--accent-color); color: white; }
 
     .application-form-card {
         background: rgba(255, 255, 255, 0.98);
@@ -140,12 +138,8 @@
     .form-header h2 {
         font-size: 2.2rem;
         font-weight: 700;
-        color: #1a202c;
+        color: var(--primary-color);
         margin: 0 0 10px 0;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
     }
 
     .form-header p {
@@ -199,8 +193,8 @@
 
     .form-input:focus, .form-textarea:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
         transform: translateY(-1px);
     }
 
@@ -250,7 +244,7 @@
     }
 
     .btn-submit {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-color);
         color: white;
         border: none;
         padding: 18px 40px;
@@ -259,7 +253,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         display: inline-flex;
         align-items: center;
         gap: 10px;
@@ -270,7 +264,7 @@
 
     .btn-submit:hover {
         transform: translateY(-3px);
-        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
     }
 
     .btn-submit:active {
@@ -302,7 +296,7 @@
     }
 
     .process-timeline {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-color);
         border-radius: 20px;
         padding: 50px 40px;
         margin-top: 40px;
@@ -494,7 +488,7 @@
             <h4 style="color: #374151; margin-bottom: 15px; font-size: 18px;">🛠️ Compétences requises</h4>
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 {% for skill in job.skills[:8] %}
-                <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;">{{ skill }}</span>
+                <span style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;">{{ skill }}</span>
                 {% endfor %}
                 {% if job.skills|length > 8 %}
                 <span style="background: #f1f5f9; color: #64748b; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;">+{{ job.skills|length - 8 }} autres</span>

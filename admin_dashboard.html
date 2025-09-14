@@ -2,32 +2,28 @@
 {% block title %}Admin Dashboard - Entretien Automatisé{% endblock %}
 
 {% block content %}
-<div class="main-title">
-    <h1>👨‍💼 Admin Dashboard</h1>
-    <p>System management and oversight</p>
-</div>
+<div class="admin-dashboard">
+    <div class="container">
+        <div class="main-title">
+            <h1>👨‍💼 Admin Dashboard</h1>
+            <p>System management and oversight</p>
+        </div>
 
-<!-- Statistics Overview -->
-<div class="row">
-    <div class="col-md-4">
-        <div class="job-card text-center">
-            <h3>{{ total_candidates }}</h3>
-            <p>Total Candidates</p>
+        <!-- Statistics Overview -->
+        <div class="admin-stats">
+            <div class="stat-card">
+                <h3>{{ total_candidates }}</h3>
+                <p>Total Candidates</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ completed_tests }}</h3>
+                <p>Completed Tests</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ "%.1f"|format(completion_rate) }}%</h3>
+                <p>Completion Rate</p>
+            </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="job-card text-center">
-            <h3>{{ completed_tests }}</h3>
-            <p>Completed Tests</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="job-card text-center">
-            <h3>{{ "%.1f"|format(completion_rate) }}%</h3>
-            <p>Completion Rate</p>
-        </div>
-    </div>
-</div>
 
 <!-- Navigation Tabs -->
 <div class="tabs">
@@ -38,9 +34,39 @@
 
 <!-- Recruiters Tab -->
 <div id="recruiters" class="tab-content">
-    <div class="job-card">
+    <div class="card-professional">
         <h3>👥 Recruiters Management</h3>
-        <a href="#" class="apply-button mb-3">+ Add New Recruiter</a>
+
+        <!-- Add New Recruiter Form -->
+        <div class="mb-4">
+            <button class="btn-professional mb-3" onclick="toggleAddForm()">+ Add New Recruiter</button>
+
+            <div id="add-recruiter-form" style="display: none; margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+                <h4>Add New Recruiter</h4>
+                <form method="POST" action="{{ url_for('add_recruiter') }}" enctype="multipart/form-data">
+                    <div class="form-group-professional">
+                        <label for="username" class="form-label-professional">Username:</label>
+                        <input type="text" id="username" name="username" class="form-input-professional" required>
+                    </div>
+                    <div class="form-group-professional">
+                        <label for="email" class="form-label-professional">Email:</label>
+                        <input type="email" id="email" name="email" class="form-input-professional" required>
+                    </div>
+                    <div class="form-group-professional">
+                        <label for="password" class="form-label-professional">Password:</label>
+                        <input type="password" id="password" name="password" class="form-input-professional" required>
+                    </div>
+                    <div class="form-group-professional">
+                        <label for="profile_picture" class="form-label-professional">Profile Picture (optional):</label>
+                        <input type="file" id="profile_picture" name="profile_picture" class="form-input-professional" accept="image/*">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-professional">Add Recruiter</button>
+                        <button type="button" class="btn-professional" onclick="toggleAddForm()" style="background: var(--gray-500);">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         {% if recruiters %}
         <div class="table-responsive">
@@ -60,7 +86,7 @@
                         <td>{{ recruiter.username }}</td>
                         <td>{{ recruiter.email }}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                            <button class="btn btn-sm btn-outline-danger" data-recruiter-id="{{ recruiter.id }}" data-recruiter-name="{{ recruiter.username }}" onclick="deleteRecruiter(this)">Delete</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -88,6 +114,7 @@
                         <th>Email</th>
                         <th>Recruiter</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,6 +130,9 @@
                             {% else %}
                             <span class="badge bg-warning">Pending</span>
                             {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" data-candidate-id="{{ candidate.id }}" data-candidate-name="{{ candidate.username }}" onclick="deleteCandidate(this)">Delete</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -144,23 +174,255 @@
     </div>
 </div>
 
-<!-- Logout Button -->
-<div class="text-center mt-4">
-    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+        <!-- Logout Button -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('logout') }}" class="btn-professional" style="background: #6b7280;">Logout</a>
+        </div>
+    </div>
 </div>
 
 <style>
-.row {
+/* Admin Dashboard Specific Styles */
+.admin-dashboard {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    border: 1px solid #e5e7eb;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #6366f1;
+    margin: 0 0 0.5rem 0;
+}
+
+.stat-card p {
+    color: #6b7280;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Tab Navigation */
+.tabs {
     display: flex;
-    flex-wrap: wrap;
-    margin: 0 -15px 30px -15px;
+    background: white;
+    border-radius: 12px;
+    padding: 0.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
 }
 
-.col-md-4, .col-md-6 {
-    padding: 0 15px;
-    margin-bottom: 30px;
+.tab-button {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
 }
 
+.tab-button.active {
+    background: #6366f1;
+    color: white;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
+
+.tab-button:hover:not(.active) {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Tab Content */
+.tab-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    border: 1px solid #e5e7eb;
+}
+
+/* Table Styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.table th {
+    background: #f9fafb;
+    color: #374151;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #6b7280;
+}
+
+.table tr:hover {
+    background: #f9fafb;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Form Styles */
+.form-group-professional {
+    margin-bottom: 1.5rem;
+}
+
+.form-label-professional {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+}
+
+.form-input-professional {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    background: white;
+    color: #374151;
+}
+
+.form-input-professional:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Button Styles */
+.btn-professional {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
+
+.btn-professional:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+}
+
+.btn-professional:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Badge Styles */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bg-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.bg-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .admin-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .tabs {
+        flex-direction: column;
+    }
+
+    .tab-content {
+        padding: 1.5rem;
+    }
+
+    .table-responsive {
+        font-size: 14px;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard {
+        padding: 1rem 0;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-card h3 {
+        font-size: 2rem;
+    }
+
+    .tab-content {
+        padding: 1rem;
+    }
+}
+
+/* Utility Classes */
 .text-center {
     text-align: center;
 }
@@ -173,6 +435,10 @@
     margin-bottom: 1rem;
 }
 
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
 .d-flex {
     display: flex;
 }
@@ -181,101 +447,24 @@
     gap: 0.5rem;
 }
 
-.btn {
-    padding: 8px 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-    text-decoration: none;
+.d-none {
+    display: none;
+}
+
+/* Loading States */
+.loading-spinner {
     display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
 }
 
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 0.875rem;
-}
-
-.btn-outline-primary {
-    color: #667eea;
-    border-color: #667eea;
-}
-
-.btn-outline-primary:hover {
-    background-color: #667eea;
-    color: white;
-}
-
-.btn-outline-secondary {
-    color: #6b7280;
-    border-color: #6b7280;
-}
-
-.btn-outline-secondary:hover {
-    background-color: #6b7280;
-    color: white;
-}
-
-.btn-outline-danger {
-    color: #dc3545;
-    border-color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-    background-color: #dc3545;
-    color: white;
-}
-
-.btn-outline-warning {
-    color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-.btn-outline-warning:hover {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.bg-success {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.bg-warning {
-    background-color: #fff3cd;
-    color: #856404;
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th, .table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.table-responsive {
-    overflow-x: auto;
-}
-
-@media (max-width: 768px) {
-    .col-md-4, .col-md-6 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-
-    .d-flex {
-        flex-direction: column;
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }
 </style>
@@ -297,6 +486,94 @@ document.querySelectorAll('.tab-button').forEach(button => {
         document.getElementById(tabId).style.display = 'block';
     });
 });
+
+// Toggle add recruiter form
+function toggleAddForm() {
+    const form = document.getElementById('add-recruiter-form');
+    if (form.style.display === 'none' || form.style.display === '') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+// Delete recruiter function
+function deleteRecruiter(button) {
+    const recruiterId = button.getAttribute('data-recruiter-id');
+    const recruiterName = button.getAttribute('data-recruiter-name');
+
+    if (confirm(`Are you sure you want to delete recruiter "${recruiterName}"? This action cannot be undone.`)) {
+        // Show loading state
+        const originalText = button.innerHTML;
+        button.innerHTML = '<div class="loading-spinner"></div> Deleting...';
+        button.disabled = true;
+
+        // Send DELETE request to delete recruiter
+        fetch(`/admin/delete-recruiter/${recruiterId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Recruiter deleted successfully!');
+                // Reload the page to update the recruiter list
+                location.reload();
+            } else {
+                alert('❌ Failed to delete recruiter: ' + (data.error || 'Unknown error'));
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error deleting recruiter. Please try again.');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// Delete candidate function
+function deleteCandidate(button) {
+    const candidateId = button.getAttribute('data-candidate-id');
+    const candidateName = button.getAttribute('data-candidate-name');
+
+    if (confirm(`Are you sure you want to delete candidate "${candidateName}"? This action cannot be undone.`)) {
+        // Show loading state
+        const originalText = button.innerHTML;
+        button.innerHTML = '<div class="loading-spinner"></div> Deleting...';
+        button.disabled = true;
+
+        // Send DELETE request to delete candidate
+        fetch(`/admin/delete-candidate/${candidateId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Candidate deleted successfully!');
+                // Reload the page to update the candidate list
+                location.reload();
+            } else {
+                alert('❌ Failed to delete candidate: ' + (data.error || 'Unknown error'));
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error deleting candidate. Please try again.');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
 </script>
 {% endblock %}
 {% endblock %}

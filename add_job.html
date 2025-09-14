@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Add New Job - {{ recruiter.username }}{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section style="padding: 4rem 0; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-bottom: 1px solid rgba(255,255,255,0.2);">
+    <div class="container">
+        <div class="fade-in-up" style="text-align: center;">
+            <h1 style="font-size: 3rem; font-weight: 800; color: white; margin-bottom: 1rem;">
+                Add New <span style="color: white;">Job</span>
+            </h1>
+            <p style="font-size: 1.2rem; color: white; max-width: 600px; margin: 0 auto;">
+                Create a new job posting for your recruitment needs
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Job Form -->
+<section style="padding: 3rem 0;">
+    <div class="container">
+        <div class="card-professional">
+            <h2 style="font-size: 1.8rem; font-weight: 700; color: var(--gray-800); margin-bottom: 2rem; text-align: center;">
+                Job Information
+            </h2>
+
+            <form method="POST" enctype="multipart/form-data">
+                <!-- Company Information -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: var(--gray-800); margin-bottom: 1rem;">
+                        🏢 Company Information
+                    </h3>
+                    <div class="form-group-professional">
+                        <label class="form-label-professional">Company Name *</label>
+                        <input type="text" name="company_name" class="form-input-professional" required
+                               placeholder="Enter company name">
+                    </div>
+                </div>
+
+                <!-- Job Details -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: var(--gray-800); margin-bottom: 1rem;">
+                        💼 Job Details
+                    </h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Position *</label>
+                            <input type="text" name="position" class="form-input-professional" required
+                                   placeholder="e.g., Senior Developer">
+                        </div>
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Job Title *</label>
+                            <input type="text" name="title" class="form-input-professional" required
+                                   placeholder="e.g., Senior Python Developer">
+                        </div>
+                    </div>
+
+                    <div class="form-group-professional">
+                        <label class="form-label-professional">Job Description *</label>
+                        <textarea name="description" class="form-input-professional" rows="6" required
+                                  placeholder="Describe the job responsibilities, requirements, and what the candidate will do..."></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Location</label>
+                            <input type="text" name="location" class="form-input-professional"
+                                   value="Remote" placeholder="e.g., Paris, Remote">
+                        </div>
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Job Type</label>
+                            <select name="job_type" class="form-select-professional">
+                                <option value="full-time">Full-time</option>
+                                <option value="part-time">Part-time</option>
+                                <option value="contract">Contract</option>
+                                <option value="internship">Internship</option>
+                            </select>
+                        </div>
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Posted Date</label>
+                            <input type="date" name="posted_date" class="form-input-professional"
+                                   value="{{ today.strftime('%Y-%m-%d') if today else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Salary Information -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: var(--gray-800); margin-bottom: 1rem;">
+                        💰 Salary Information
+                    </h3>
+                    <div style="display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 1rem;">
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Salary From</label>
+                            <input type="number" name="salary_from" class="form-input-professional"
+                                   placeholder="50000" step="1000">
+                        </div>
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Salary To</label>
+                            <input type="number" name="salary_to" class="form-input-professional"
+                                   placeholder="70000" step="1000">
+                        </div>
+                        <div class="form-group-professional">
+                            <label class="form-label-professional">Currency</label>
+                            <select name="salary_currency" class="form-select-professional">
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="GBP">GBP</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills and Application -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: var(--gray-800); margin-bottom: 1rem;">
+                        🛠️ Skills & Application
+                    </h3>
+                    <div class="form-group-professional">
+                        <label class="form-label-professional">Required Skills *</label>
+                        <input type="text" name="skills" class="form-input-professional" required
+                               placeholder="Python, JavaScript, SQL, React (comma-separated)">
+                        <small style="color: var(--gray-500); font-size: 0.9rem;">Separate skills with commas</small>
+                    </div>
+
+                    <div class="form-group-professional">
+                        <label class="form-label-professional">Application URL</label>
+                        <input type="url" name="apply_url" class="form-input-professional"
+                               placeholder="https://company.com/careers/job-123">
+                        <small style="color: var(--gray-500); font-size: 0.9rem;">Leave empty to use default application form</small>
+                    </div>
+                </div>
+
+                <!-- Job Image -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.3rem; font-weight: 600; color: var(--gray-800); margin-bottom: 1rem;">
+                        📸 Job Image (Optional)
+                    </h3>
+                    <div class="form-group-professional">
+                        <label class="form-label-professional">Upload Job Image</label>
+                        <input type="file" name="job_image" accept="image/*" class="form-input-professional">
+                        <small style="color: var(--gray-500); font-size: 0.9rem;">PNG, JPG, or JPEG format recommended</small>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
+                    <a href="{{ url_for('recruiter_dashboard') }}" class="btn-professional"
+                       style="background: var(--gray-600);">
+                        ← Back to Dashboard
+                    </a>
+                    <button type="submit" class="btn-professional">
+                        <i class="fas fa-plus"></i> Create Job Posting
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<style>
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .card-professional {
+        padding: 1.5rem;
+    }
+
+    .form-group-professional {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-input-professional,
+    .form-select-professional {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}
+
+@media (max-width: 480px) {
+    .card-professional {
+        padding: 1rem;
+    }
+
+    .btn-professional {
+        padding: 0.875rem 1.5rem;
+        font-size: 14px;
+    }
+}
+</style>
+
+{% endblock %}

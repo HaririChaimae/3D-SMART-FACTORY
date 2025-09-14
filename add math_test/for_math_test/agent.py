@@ -1,4 +1,4 @@
-# ===================== Gemini-Based agent.py =====================
+# ===================== Streamlit-Friendly agent.py =====================
 
 import os
 import json
@@ -6,8 +6,8 @@ import logging
 import re
 import numpy as np
 from PyPDF2 import PdfReader
-from sentence_transformers import SentenceTransformer
 import google.generativeai as genai
+from sentence_transformers import SentenceTransformer
 
 # ========== CONFIG ==========
 UPLOAD_FOLDER = "mycv"
@@ -20,16 +20,11 @@ for folder in [UPLOAD_FOLDER, KNOWLEDGE_FOLDER, RESPONSES_FOLDER]:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 🔑 Gemini API Configuration
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
-    logger.info("✅ Gemini API configured successfully")
-else:
-    logger.error("❌ GOOGLE_API_KEY not found in environment variables")
+# 🔑 Gemini API (génération / RAG + évaluation)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY", "AIzaSyAsFV_76YydiedKOtBiNztFsAQpXzcv0pI"))
 
-GEN_MODEL = "gemini-1.5-flash"
-EVAL_MODEL = "gemini-1.5-flash"
+GEN_MODEL = "gemini-2.0-flash"
+EVAL_MODEL = "gemini-2.0-flash"  # Utilisation du même modèle pour l'évaluation
 
 # SentenceTransformer → uniquement pour FAISS (RAG)
 st_model = SentenceTransformer("all-mpnet-base-v2")
@@ -82,86 +77,52 @@ def search_knowledge(query, index, texts, top_k=2):
 
 # ========== QUESTION GENERATION (CV + PDF corrigé) ==========
 def generate_questions_from_cv(cv_text, knowledge_chunks, n=3):
-    """Génère des questions d'entretien en utilisant Gemini"""
+    cv_excerpt = cv_text[:2000] if cv_text else "CV non disponible"
+    context = "\n---\n".join(knowledge_chunks[:3])[:3000]
+    prompt = f"""
+    Voici un extrait du exercices corrigé :
+    {context}
+
+    Génère {n} exercices techniques pratiques en français, 
+    apartir de la base corrigée.
+    Réponds uniquement par les questions, une par ligne.
+    """
     try:
-        # Préparer le contexte
-        context = "\n---\n".join(knowledge_chunks[:3])[:3000] if knowledge_chunks else ""
-
-        prompt = f"""
-        Voici un extrait de la base de connaissances technique :
-        {context}
-
-        Générez {n} exercices pratiques en français basés uniquement sur ce contenu.
-
-        Chaque exercice doit suivre exactement ce format :
-
-        Exercice : [Titre clair et court]
-        Description : [Explication complète de la tâche, avec détails sur les entrées, sorties attendues,
-        et contraintes éventuelles. Rédigez comme une consigne d'énoncé.]
-
-        ⚠️ Contraintes :
-        - Ne mettez pas de numérotation automatique (pas de 1., 2., etc.).
-        - Ne répondez qu'avec les exercices, rien d'autre.
-        - N'utilisez pas de saisie avec input(). Les exercices doivent définir les valeurs d'entrée sous forme
-        de variables ou de paramètres déjà fournis, jamais par interaction utilisateur.
-        """
-
         model = genai.GenerativeModel(GEN_MODEL)
         response = model.generate_content(prompt)
         text = response.text.strip()
-
-        # Split on "Exercice :" and keep everything together
-        raw_exercises = re.split(r"(?=Exercice\s*:)", text)
-        questions = [ex.strip() for ex in raw_exercises if ex.strip()]
-
-        logger.info(f"✅ {len(questions)} questions générées avec Gemini")
+        questions = []
+        for line in text.split("\n"):
+            line = re.sub(r"^(\d+[\.\)]|\-|\•)\s*", "", line.strip())
+            if line:
+                questions.append(line)
         return questions[:n]
-
     except Exception as e:
-        logger.error(f"❌ Erreur génération questions Gemini: {e}")
-
-        # Fallback: questions prédéfinies
-        fallback_questions = [
-            "Écrivez une fonction qui calcule la somme de deux nombres.",
-            "Écrivez une fonction qui vérifie si un nombre est pair ou impair.",
-            "Écrivez une fonction qui trouve le maximum de trois nombres."
-        ]
-        logger.info(f"🔄 Fallback: {len(fallback_questions[:n])} questions prédéfinies")
-        return fallback_questions[:n]
+        logger.error(f"Error generating questions: {e}")
+        return []
 
 # ========== ANSWER GENERATION (RAG depuis data/) ==========
-def generate_answer_for_question(question, index=None, texts=None, max_context_length=1500):
-    """Génère une réponse à une question en utilisant OpenRouter"""
+def generate_answer_for_question(question, index, texts, max_context_length=1500):
+    relevant = search_knowledge(question, index, texts, top_k=2)
+    if not relevant:
+        return "Réponse non disponible."
+    context = "\n".join(relevant)[:max_context_length]
+    prompt = f"""
+    Question d'entretien :
+    {question}
+
+    Contexte (issu du PDF corrigé) :
+    {context}
+
+    Donne uniquement la réponse correcte, concise et directe en français.
+    """
     try:
-        # Recherche dans la base de connaissances si disponible
-        context = ""
-        if index and texts:
-            relevant = search_knowledge(question, index, texts, top_k=2)
-            if relevant:
-                context = "\n".join(relevant)[:max_context_length]
-
-        prompt = f"""
-        Question d'entretien :
-        {question}
-
-        {"Contexte (issu du PDF corrigé) :" + context if context else ""}
-
-        Donne une réponse complète et pédagogique en français.
-        Explique le concept et fournis un exemple de code si applicable.
-        """
-
-        try:
-            model = genai.GenerativeModel(GEN_MODEL)
-            response = model.generate_content(prompt)
-            logger.info("✅ Réponse générée avec Gemini")
-            return response.text.strip()
-        except Exception as e:
-            logger.warning(f"⚠️ Gemini non disponible: {e}")
-            return "Réponse par défaut - IA non disponible"
-
+        model = genai.GenerativeModel(GEN_MODEL)
+        response = model.generate_content(prompt)
+        return response.text.strip()
     except Exception as e:
-        logger.error(f"❌ Erreur génération réponse: {e}")
-        return "Réponse non disponible - erreur système."
+        logger.error(f"Error generating answer: {e}")
+        return "Réponse non disponible."
 
 # ========== ÉVALUATION (Gemini au lieu d'OpenRouter) - IMPROVED ==========
 def extract_json_robust(text):
@@ -287,121 +248,102 @@ def extract_json_robust(text: str):
     return None
 
 def evaluate_single_answer_with_llm(user_answer, correct_answer, question, max_retries=3):
-    """Évaluation utilisant OpenRouter au lieu de Gemini"""
+    """
+    Évaluation robuste :
+    - pré-checks locaux (copie d'énoncé, code présent)
+    - appel à Gemini avec rubric + format strict JSON
+    - extraction JSON robuste + fallback local
+    """
     try:
-        # Pré-check 1: copie de l'énoncé
+        # Pré-check 1: copie de l'énoncé (seuil ajustable)
         sim_with_question = text_similarity(user_answer, question)
         sim_with_expected = text_similarity(user_answer, correct_answer)
         logger.debug(f"Sim(question)={sim_with_question:.3f}, Sim(expected)={sim_with_expected:.3f}")
 
-        # Vérification de copie
+        # si la réponse ressemble fortement à l'énoncé ou à la réponse attendue (ici seuil 0.80),
+        # on considère que le candidat n'a pas fourni de solution correcte (copie).
         COPY_THRESHOLD = 0.80
         if sim_with_question >= COPY_THRESHOLD or sim_with_expected >= COPY_THRESHOLD:
-            return 0.0, "Réponse invalide : l'énoncé ou la réponse attendue a été recopiée."
+            return 0.0, "Réponse invalide : l'énoncé ou la réponse attendue a été recopiée au lieu de fournir une solution."
 
-        # Pré-check 2: présence de code
+        # Pré-check 2: s'il y a du code attendu, s'assurer que la réponse contient du code-like
         expected_has_code = bool(re.search(r'```|input\s*\(|def\s+|print\s*\(|for\s+|while\s+|return\s+|:=', str(correct_answer)))
         candidate_has_code = bool(re.search(r'```|input\s*\(|def\s+|print\s*\(|for\s+|while\s+|return\s+|:=', str(user_answer)))
-
+        # On peut signaler ce signal au modèle via le prompt (il pénalisera si attendu mais absent)
+        code_warning = ""
         if expected_has_code and not candidate_has_code:
-            return 0.2, "Code attendu mais non fourni par le candidat."
+            code_warning = ("NOTE: la réponse attendue contient du code; la réponse du candidat ne semble "
+                            "pas contenir de code. Pénalisez en conséquence.")
 
-        # Utilisation de Gemini pour l'évaluation
-        try:
-            prompt = f"""
-            Évaluez cette réponse d'entretien technique :
+        # Construire prompt d'évaluation (rubric + format exigé)
+        base_prompt = f"""
+        Tu es un évaluateur d'entretien technique. Ton rôle est de noter une réponse de candidat.
 
-            Question : {question}
+        QUESTION :
+        {question}
 
-            Réponse du candidat :
-            {user_answer}
+        RÉPONSE ATTENDUE :
+        {correct_answer}
 
-            Réponse attendue :
-            {correct_answer}
+        RÉPONSE DU CANDIDAT :
+        {user_answer}
 
-            Instructions d'évaluation :
-            - Analysez la similarité entre la réponse du candidat et la réponse attendue
-            - Vérifiez si la logique et la syntaxe sont correctes (surtout pour le code)
-            - Attribuez un score de 0 à 10 (où 10 est parfait)
-            - Fournissez une justification détaillée
+        Barème (pondération) :
+        - Exactitude (60%) : le programme produit-il le bon résultat ?
+        - Cas limites & validation (20%) : respecte-t-il les contraintes ?
+        - Lisibilité du code (10%) : est-ce clair et compréhensible ?
+        - Format & robustesse (10%) : code exécutable et bien structuré ?
 
-            Format de réponse requis (JSON uniquement) :
-            {{
-                "score": <nombre entre 0 et 10>,
-                "justification": "<justification détaillée en français>"
-            }}
-            """
+        Règles critiques :
+        - Si le candidat copie seulement l'énoncé ou la réponse attendue, mets score=0.0 et justification="Copie - aucune solution".
+        - Si la réponse attendue contient du code mais le candidat n'en fournit pas, mets score ≤ 0.2.
+        - Si la solution est très incomplète (ex: prend 1 entrée au lieu de 3), mets un score faible (0.1 à 0.3).
+        - Réponds UNIQUEMENT avec du JSON valide, jamais de texte hors JSON.
 
-            model = genai.GenerativeModel(EVAL_MODEL)
-            response = model.generate_content(prompt)
-            response_text = response.text.strip()
+        Format de sortie attendu :
+        {{
+        "score": 0.xx,
+        "justification": "Phrase courte (max 140 caractères, en français)"
+        }}
+        """
 
-            # Extraire le JSON de la réponse
-            try:
-                # Chercher un objet JSON dans la réponse
-                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-                if json_match:
-                    evaluation = json.loads(json_match.group())
-                else:
-                    # Fallback: extraire manuellement
-                    score_match = re.search(r'"score"\s*:\s*(\d+(?:\.\d+)?)', response_text)
-                    justif_match = re.search(r'"justification"\s*:\s*"([^"]*)"', response_text, re.DOTALL)
 
-                    evaluation = {
-                        "score": float(score_match.group(1)) if score_match else 5.0,
-                        "justification": justif_match.group(1) if justif_match else "Évaluation automatique"
-                    }
+        # Appel LLM
+        model = genai.GenerativeModel(EVAL_MODEL)
+        generation_config = {
+            "temperature": 0.0,
+            "max_output_tokens": 200
+        }
 
-                # Normalisation du score (Gemini retourne 0-10, on veut 0-1)
-                score = evaluation.get('score', 5.0) / 10.0
-                score = max(0.0, min(1.0, score))  # Clamp entre 0 et 1
+        for attempt in range(max_retries):
+            response = model.generate_content(base_prompt, generation_config=generation_config)
+            text = response.text.strip()
+            logger.debug(f"Gemini response (attempt {attempt+1}): {text}")
 
-                justification = evaluation.get('justification', 'Évaluation Gemini')
-
-                logger.info(f"✅ Évaluation Gemini: score={score}, justification='{justification[:50]}...'")
+            data = extract_json_robust(text)
+            if data and "score" in data:
+                # clamp score between 0 and 1
+                try:
+                    score = float(data.get("score", 0.0))
+                except Exception:
+                    score = 0.0
+                score = max(0.0, min(1.0, score))
+                justification = data.get("justification", "").strip() or "Pas de justification fournie"
+                logger.info(f"Evaluation OK: score={score}, justification='{justification}'")
                 return score, justification
 
-            except Exception as json_error:
-                logger.warning(f"⚠️ Erreur parsing JSON Gemini: {json_error}")
-                # Fallback avec extraction manuelle
-                score_match = re.search(r'score[":\s]+(\d+(?:\.\d+)?)', response_text)
-                if score_match:
-                    score = float(score_match.group(1)) / 10.0
-                    score = max(0.0, min(1.0, score))
-                    return score, "Score extrait de la réponse Gemini"
-                else:
-                    raise Exception("Impossible d'extraire le score")
+            logger.warning(f"JSON invalide ou absent (tentative {attempt+1}). Réponse brute : {text}")
 
-        except Exception as e:
-            logger.warning(f"⚠️ Erreur Gemini: {e}")
-            # Fallback: simple text similarity scoring
-            similarity_score = text_similarity(user_answer, correct_answer)
-            fallback_score = min(1.0, similarity_score * 1.5)  # Boost similarity score more aggressively
-
-            # More lenient scoring for code answers
-            if expected_has_code and candidate_has_code:
-                # For code answers, be more lenient
-                fallback_score = min(1.0, similarity_score * 2.0)
-
-            if fallback_score > 0.6:
-                justification = f"Réponse correcte (similarité: {similarity_score:.2f})"
-            elif fallback_score > 0.3:
-                justification = f"Réponse partiellement correcte (similarité: {similarity_score:.2f})"
-            else:
-                justification = f"Réponse incorrecte (similarité: {similarity_score:.2f})"
-
-            logger.info(f"🔄 Fallback scoring: score={fallback_score}, justification='{justification}'")
-            return fallback_score, justification
+        # fallback local heuristics si Gemini n'a pas renvoyé un JSON exploitable
+        # Simple heuristique : présence de code -> 0.5 sinon 0.1 (à ajuster)
+        fallback_score = 0.5 if candidate_has_code else 0.1
+        fallback_just = "Fallback heuristique: absence de réponse JSON valide du modèle"
+        logger.warning("Toutes les tentatives ont échoué, retour fallback.")
+        return fallback_score, fallback_just
 
     except Exception as e:
-        logger.exception("Erreur lors de l'évaluation")
-        # Even in case of error, try basic similarity
-        try:
-            similarity_score = text_similarity(user_answer, correct_answer)
-            fallback_score = min(1.0, similarity_score * 1.2)
-            return fallback_score, f"Évaluation de secours (similarité: {similarity_score:.2f})"
-        except:
-            return 0.5, "Évaluation par défaut - score moyen attribué"
+        logger.exception("Erreur lors de l'évaluation LLM.")
+        return 0.0, f"Erreur d'évaluation: {e}"
 
 def evaluate_answers(user_answers, correct_answers, threshold=0.75):
     """
@@ -481,10 +423,10 @@ def get_evaluation_summary(results):
     """
     if not results:
         return {"total": 0, "average_score": 0.0, "passed": 0, "failed": 0}
-
+    
     scores = [r["score"] for r in results.values() if isinstance(r.get("score"), (int, float))]
     passed = sum(1 for r in results.values() if r.get("match") == "true")
-
+    
     return {
         "total": len(results),
         "average_score": round(sum(scores) / len(scores) if scores else 0.0, 3),
@@ -492,33 +434,3 @@ def get_evaluation_summary(results):
         "failed": len(results) - passed,
         "success_rate": round(passed / len(results) * 100, 1) if results else 0.0
     }
-
-def test_evaluation():
-    """
-    Test function to debug evaluation
-    """
-    # Test data
-    user_answer = """def somme(a, b):
-    return a + b
-
-print(somme(5, 3))"""
-
-    correct_answer = """def somme(nombre1, nombre2):
-    return nombre1 + nombre2
-
-print(somme(5, 3))"""
-
-    question = "Écrivez une fonction qui calcule la somme de deux nombres."
-
-    # Test evaluation
-    score, justification = evaluate_single_answer_with_llm(user_answer, correct_answer, question)
-
-    print(f"Test Evaluation Result:")
-    print(f"Score: {score}")
-    print(f"Justification: {justification}")
-
-    return score, justification
-
-# Uncomment to test:
-# if __name__ == "__main__":
-#     test_evaluation()

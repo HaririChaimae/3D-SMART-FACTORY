@@ -27,271 +27,391 @@
 
 <!-- Overview Tab -->
 <div id="overview" class="tab-content">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="job-card text-center">
-                <h3>{{ jobs|length }}</h3>
-                <p>Jobs Posted</p>
-            </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+        <div class="card-professional text-center">
+            <h3 style="font-size: 3rem; font-weight: 800; color: var(--primary-color); margin-bottom: 1rem;">{{ jobs|length }}</h3>
+            <p style="font-size: 1.2rem; color: var(--gray-600); font-weight: 600;">Jobs Posted</p>
         </div>
-        <div class="col-md-4">
-            <div class="job-card text-center">
-                <h3>{{ candidates|length }}</h3>
-                <p>Total Candidates</p>
-            </div>
+        <div class="card-professional text-center">
+            <h3 style="font-size: 3rem; font-weight: 800; color: var(--secondary-color); margin-bottom: 1rem;">{{ candidates|length }}</h3>
+            <p style="font-size: 1.2rem; color: var(--gray-600); font-weight: 600;">Total Candidates</p>
         </div>
-        <div class="col-md-4">
-            <div class="job-card text-center">
-                {% set completed = candidates | selectattr('test_completed') | list %}
-                <h3>{{ completed|length }}</h3>
-                <p>Completed Tests</p>
-            </div>
+        <div class="card-professional text-center">
+            {% set completed = candidates | selectattr('test_completed') | list %}
+            <h3 style="font-size: 3rem; font-weight: 800; color: var(--accent-color); margin-bottom: 1rem;">{{ completed|length }}</h3>
+            <p style="font-size: 1.2rem; color: var(--gray-600); font-weight: 600;">Completed Tests</p>
         </div>
     </div>
 
     <!-- Recent Activity -->
-    <div class="job-card">
-        <h3>📊 Recent Activity</h3>
+    <div class="card-professional">
+        <h3 style="font-size: 1.8rem; font-weight: 700; color: var(--gray-800); margin-bottom: 2rem;">📊 Recent Activity</h3>
         {% if candidates %}
-        <div class="table-responsive">
-            <table class="table">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
                 <thead>
-                    <tr>
-                        <th>Candidate</th>
-                        <th>Email</th>
-                        <th>Test Status</th>
-                        <th>Score</th>
-                        <th>Date</th>
+                    <tr style="border-bottom: 2px solid var(--gray-200);">
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">Candidate</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">Email</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">Test Status</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">Score</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">Applied Date</th>
+                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--gray-700);">Details</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for candidate in candidates[:5] %}
-                    <tr>
-                        <td>{{ candidate.username }}</td>
-                        <td>{{ candidate.email }}</td>
-                        <td>
-                            {% if candidate.test_completed %}
-                            <span class="badge bg-success">Completed</span>
+                    <tr style="border-bottom: 1px solid var(--gray-100);">
+                        <td style="padding: 1rem; color: var(--gray-800);">{{ candidate.username }}</td>
+                        <td style="padding: 1rem; color: var(--gray-600);">{{ candidate.email }}</td>
+                        <td style="padding: 1rem;">
+                            {% if candidate.questions %}
+                                {% if candidate.test_completed %}
+                                <span style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">Completed</span>
+                                {% else %}
+                                <span style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">In Progress</span>
+                                {% endif %}
                             {% else %}
-                            <span class="badge bg-warning">Pending</span>
+                            <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">Not Sent</span>
                             {% endif %}
                         </td>
-                        <td>{{ "%.1f"|format(candidate.average_score) if candidate.average_score else 'N/A' }}</td>
-                        <td>{{ candidate.test_completed_at.strftime('%Y-%m-%d') if candidate.test_completed_at else 'N/A' }}</td>
+                        <td style="padding: 1rem; color: var(--gray-800); font-weight: 600;">{{ "%.1f"|format(candidate.average_score) if candidate.test_completed else 'N/A' }}</td>
+                        <td style="padding: 1rem; color: var(--gray-600);">{{ candidate.test_completed_at if candidate.test_completed_at else 'N/A' }}</td>
+                        <td style="padding: 1rem; text-align: center;">
+                            {% if candidate.test_completed and candidate.evaluation_results %}
+                            <button onclick="toggleDetails('details-{{ candidate.id }}')" class="btn-details" style="padding: 0.25rem 0.75rem; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">View Details</button>
+                            {% else %}
+                            <span style="color: var(--gray-400); font-size: 0.875rem;">N/A</span>
+                            {% endif %}
+                        </td>
                     </tr>
+                    {% if candidate.test_completed and candidate.evaluation_results %}
+                    <tr id="details-{{ candidate.id }}" style="display: none; background: var(--gray-50);">
+                        <td colspan="6" style="padding: 0;">
+                            <div style="padding: 2rem; border-top: 1px solid var(--gray-200);">
+                                <h4 style="font-size: 1.2rem; font-weight: 700; color: var(--gray-800); margin-bottom: 1.5rem;">📋 Detailed Test Results</h4>
+                                {% for question, result in candidate.evaluation_results.items() %}
+                                <div style="margin-bottom: 2rem; padding: 1.5rem; background: white; border-radius: 12px; border: 1px solid var(--gray-200);">
+                                    <h5 style="font-size: 1rem; font-weight: 600; color: var(--gray-800); margin-bottom: 1rem;">
+                                        Question {{ loop.index }}: {{ question[:100] }}{% if question|length > 100 %}...{% endif %}
+                                    </h5>
+
+                                    <div style="margin-bottom: 1rem;">
+                                        <h6 style="font-size: 0.9rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.5rem;">Your Answer:</h6>
+                                        <pre style="background: var(--gray-100); padding: 1rem; border-radius: 8px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.85rem; color: var(--gray-800); overflow-x: auto; white-space: pre-wrap; border: 1px solid var(--gray-200);">{{ result.user | default('N/A') }}</pre>
+                                    </div>
+
+                                    <div style="margin-bottom: 1rem;">
+                                        <h6 style="font-size: 0.9rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.5rem;">Correct Answer:</h6>
+                                        <pre style="background: var(--gray-50); padding: 1rem; border-radius: 8px; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.85rem; color: var(--gray-700); overflow-x: auto; white-space: pre-wrap; border: 1px solid var(--gray-200);">{{ result.correct | default('N/A') }}</pre>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                        <div>
+                                            <span style="font-weight: 600; color: var(--gray-700);">Score:</span>
+                                            <span style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color);">{{ "%.2f"|format(result.score * 10) }}/10</span>
+                                            <span style="font-size: 0.8rem; color: var(--gray-500); margin-left: 0.5rem;">({{ "%.1f"|format(result.score * 100) }}%)</span>
+                                        </div>
+                                        <div style="flex: 1; margin: 0 2rem;">
+                                            <div style="width: 100%; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden;">
+                                                <div style="width: {{ result.score * 100 }}%; height: 100%; background: var(--primary-color); border-radius: 4px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h6 style="font-size: 0.9rem; font-weight: 600; color: var(--gray-700); margin-bottom: 0.5rem;">Evaluation:</h6>
+                                        <p style="font-size: 0.9rem; color: var(--gray-600); line-height: 1.5; margin: 0;">{{ result.justification | default('N/A') }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <p>No candidates yet.</p>
+        <p style="text-align: center; color: var(--gray-500); font-size: 1.1rem; margin: 2rem 0;">No candidates yet.</p>
         {% endif %}
     </div>
 </div>
 
 <!-- Job Management Tab -->
 <div id="jobs" class="tab-content" style="display: none;">
-    <div class="job-card">
-        <h3>💼 Your Job Postings</h3>
-        <a href="#" class="apply-button mb-3">+ Add New Job</a>
+    <div class="card-professional">
+        <h3 style="font-size: 1.8rem; font-weight: 700; color: var(--gray-800); margin-bottom: 2rem;">💼 Your Job Postings</h3>
+        <a href="{{ url_for('add_job') }}" class="btn-professional" style="margin-bottom: 2rem; display: inline-block;">+ Add New Job</a>
 
         {% if jobs %}
         {% for job in jobs %}
-        <div class="job-card" style="margin-bottom: 15px;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <h4>{{ job.title }}</h4>
-                    <p class="mb-1">{{ job.company_name }} • {{ job.location }} • {{ job.type }}</p>
-                    <p class="text-muted">{{ job.posted }}</p>
+        <div class="card-professional" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1.3rem; font-weight: 700; color: var(--gray-800); margin-bottom: 0.5rem;">{{ job.title }}</h4>
+                    <p style="color: var(--gray-600); margin-bottom: 0.5rem; font-size: 0.95rem;">{{ job.company_name }} • {{ job.location }} • {{ job.type }}</p>
+                    <p style="color: var(--gray-500); font-size: 0.9rem;">{{ job.posted or 'N/A' }}</p>
                 </div>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary">Edit</button>
-                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button style="padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600;">Edit</button>
+                    <button onclick="deleteJob({{ job.id }}, '{{ job.title }}')" style="padding: 0.5rem 1rem; background: var(--error-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600;">Delete</button>
                 </div>
             </div>
         </div>
         {% endfor %}
         {% else %}
-        <p>No jobs posted yet. <a href="#">Add your first job</a></p>
+        <p style="text-align: center; color: var(--gray-500); font-size: 1.1rem; margin: 2rem 0;">No jobs posted yet. <a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Add your first job</a></p>
         {% endif %}
     </div>
 </div>
 
 <!-- Applications Tab -->
 <div id="applications" class="tab-content" style="display: none;">
-    <div class="job-card">
-        <h3>👥 Job Applications</h3>
+    <div class="card-professional">
+        <h3 style="font-size: 1.8rem; font-weight: 700; color: var(--gray-800); margin-bottom: 2rem;">👥 Job Applications</h3>
 
-        {% if candidates %}
-        {% for candidate in candidates %}
-        <div class="job-card" style="margin-bottom: 15px;">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h4>{{ candidate.username }}</h4>
-                    <p class="mb-1">{{ candidate.email }}</p>
-                    {% if candidate.test_completed %}
-                    <p class="mb-0">Score: {{ "%.1f"|format(candidate.average_score) }}/10</p>
+        {% if applications %}
+        {% for application in applications %}
+        <div class="card-professional" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1.3rem; font-weight: 700; color: var(--gray-800); margin-bottom: 0.5rem;">{{ application.username }}</h4>
+                    <p style="color: var(--gray-600); margin-bottom: 0.5rem; font-size: 0.95rem;">{{ application.email }}</p>
+                    <p style="color: var(--gray-500); margin-bottom: 0.5rem; font-size: 0.9rem;">
+                        📋 Applied to: <strong>{{ application.job_title }}</strong> at {{ application.job_company }}
+                    </p>
+                    <p style="color: var(--gray-500); font-size: 0.85rem;">
+                        📅 Applied on: {{ application.applied_at if application.applied_at else 'N/A' }}
+                    </p>
+                    {% if application.test_completed %}
+                    <p style="color: var(--gray-800); font-size: 0.95rem; font-weight: 600; margin: 0.5rem 0 0 0;">Score: {{ "%.1f"|format(application.average_score) }}/10</p>
                     {% endif %}
                 </div>
-                <div>
-                    {% if candidate.test_completed %}
-                    <span class="badge bg-success">Test Completed</span>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+                    {% if application.test_completed %}
+                    <span style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">Test Completed</span>
                     {% else %}
-                    <span class="badge bg-warning">Test Pending</span>
+                    <span style="background: #f59e0b; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">In Progress</span>
                     {% endif %}
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button style="padding: 0.5rem 1rem; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">View CV</button>
+                        <button onclick="sendTestToApplicant({{ application.id }}, '{{ application.email }}', '{{ application.username }}', '{{ application.job_title }}')"
+                                style="padding: 0.5rem 1rem; background: var(--secondary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                            {% if application.questions %}🔄 Resend Test{% else %}📨 Send Test{% endif %}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
         {% endfor %}
         {% else %}
-        <p>No applications received yet.</p>
+        <p style="text-align: center; color: var(--gray-500); font-size: 1.1rem; margin: 2rem 0;">No applications received yet.</p>
         {% endif %}
     </div>
 </div>
 
 <!-- Profile Tab -->
 <div id="profile" class="tab-content" style="display: none;">
-    <div class="job-card">
-        <h3>👤 Profile Management</h3>
+    <div class="card-professional">
+        <h3 style="font-size: 1.8rem; font-weight: 700; color: var(--gray-800); margin-bottom: 2rem;">👤 Profile Management</h3>
 
         <form method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label>Profile Picture</label>
-                <input type="file" name="profile_picture" accept="image/*" class="form-control">
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--gray-700); font-size: 1rem;">Profile Picture</label>
+                <input type="file" name="profile_picture" accept="image/*" style="width: 100%; padding: 1rem; border: 2px solid var(--gray-200); border-radius: 12px; font-size: 1rem; background: var(--gray-50);">
             </div>
-            <button type="submit" class="btn btn-primary">Update Profile</button>
+            <button type="submit" class="btn-professional">Update Profile</button>
         </form>
     </div>
 </div>
 
 <!-- Logout Button -->
-<div class="text-center mt-4">
-    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+<div style="text-align: center; margin-top: 3rem;">
+    <a href="{{ url_for('logout') }}" style="display: inline-block; padding: 1rem 2rem; background: var(--gray-600); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">Logout</a>
 </div>
 
 <style>
-.row {
+/* Recruiter Profile */
+.recruiter-profile {
     display: flex;
-    flex-wrap: wrap;
-    margin: 0 -15px 30px -15px;
+    align-items: center;
+    background: var(--primary-color);
+    color: white;
+    padding: 2rem;
+    border-radius: 0px;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-xl);
 }
 
-.col-md-4 {
-    padding: 0 15px;
-    margin-bottom: 30px;
+.recruiter-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 1.5rem;
+    border: 4px solid white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
+.recruiter-default-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    border: 4px solid white;
+    font-size: 2.5rem;
+}
+
+.recruiter-info h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.recruiter-info p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Navigation Tabs */
+.tabs {
+    display: flex;
+    background: white;
+    border-radius: var(--border-radius-lg);
+    padding: 0.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+}
+
+.tab-button {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: none;
+    background: transparent;
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-button.active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tab-button:hover:not(.active) {
+    background: var(--gray-100);
+    color: var(--primary-color);
+}
+
+/* Tab Content */
+.tab-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Statistics Cards */
 .text-center {
     text-align: center;
 }
 
-.mt-4 {
-    margin-top: 1.5rem;
+/* Table Styles */
+.table-responsive {
+    overflow-x: auto;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--gray-200);
 }
 
-.mb-3 {
-    margin-bottom: 1rem;
-}
-
-.d-flex {
-    display: flex;
-}
-
-.justify-content-between {
-    justify-content: space-between;
-}
-
-.align-items-start {
-    align-items: flex-start;
-}
-
-.align-items-center {
-    align-items: center;
-}
-
-.btn-group {
-    display: flex;
-    gap: 5px;
-}
-
-.btn {
-    padding: 8px 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 0.875rem;
-}
-
-.btn-outline-primary {
-    color: #667eea;
-    border-color: #667eea;
-}
-
-.btn-outline-primary:hover {
-    background-color: #667eea;
-    color: white;
-}
-
-.btn-outline-danger {
-    color: #dc3545;
-    border-color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-    background-color: #dc3545;
-    color: white;
-}
-
-.badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.bg-success {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.bg-warning {
-    background-color: #fff3cd;
-    color: #856404;
-}
-
-.table {
+.table-responsive table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.table th, .table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
+.table-responsive th {
+    background: var(--gray-50);
+    font-weight: 700;
+    color: var(--gray-800);
+    border-bottom: 2px solid var(--gray-200);
 }
 
-.table-responsive {
-    overflow-x: auto;
+.table-responsive td {
+    border-bottom: 1px solid var(--gray-100);
 }
 
+.table-responsive tr:hover {
+    background: var(--gray-50);
+}
+
+/* Form Styles */
+.form-group-professional {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-professional label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 1rem;
+}
+
+.form-group-professional input[type="file"] {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background: var(--gray-50);
+    transition: all 0.3s ease;
+}
+
+.form-group-professional input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .col-md-4 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-
-    .d-flex {
+    .recruiter-profile {
         flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
     }
 
-    .justify-content-between {
-        align-items: stretch;
+    .recruiter-avatar, .recruiter-default-avatar {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+
+    .tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .tab-button {
+        padding: 0.75rem 1rem;
+    }
+
+    .table-responsive {
+        font-size: 0.9rem;
     }
 }
 </style>
@@ -313,6 +433,96 @@ document.querySelectorAll('.tab-button').forEach(button => {
         document.getElementById(tabId).style.display = 'block';
     });
 });
+
+// Toggle detailed results visibility
+function toggleDetails(detailsId) {
+    const detailsRow = document.getElementById(detailsId);
+    if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+        detailsRow.style.display = 'table-row';
+    } else {
+        detailsRow.style.display = 'none';
+    }
+}
+
+// Delete job function
+function deleteJob(jobId, jobTitle) {
+    if (confirm(`Are you sure you want to delete the job "${jobTitle}"? This action cannot be undone.`)) {
+        // Show loading state
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = 'Deleting...';
+        button.disabled = true;
+
+        // Send DELETE request to delete job
+        fetch(`/recruiter/delete-job/${jobId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Job deleted successfully!');
+                // Reload the page to update the job list
+                location.reload();
+            } else {
+                alert('❌ Failed to delete job: ' + (data.error || 'Unknown error'));
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error deleting job. Please try again.');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// Send test invitation to individual applicant
+function sendTestToApplicant(applicationId, email, username, jobTitle) {
+    if (confirm(`Send test invitation to ${username} for the ${jobTitle} position?`)) {
+        // Show loading state
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '⏳ Sending...';
+        button.disabled = true;
+
+        // Send AJAX request to send test
+        fetch('/recruiter/send-test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                application_id: applicationId,
+                email: email,
+                username: username,
+                job_title: jobTitle
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Test invitation sent successfully!');
+                button.innerHTML = '✅ Sent';
+                button.style.background = 'var(--success-color)';
+            } else {
+                alert('❌ Failed to send test invitation: ' + (data.error || 'Unknown error'));
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error sending test invitation. Please try again.');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
 </script>
 {% endblock %}
 {% endblock %}

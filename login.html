@@ -3,14 +3,14 @@
 
 {% block content %}
 <div class="main-title">
-    <h1>🔐 Login</h1>
+    <h1>Login</h1>
     <p>Access your dashboard</p>
 </div>
 
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="job-card">
+        <div class="col-md-5 col-lg-4">
+            <div class="job-card" style="max-width: 450px; margin: 0 auto;">
                 <h3 class="text-center mb-3">Select your role:</h3>
 
                 <!-- Role Selection Tabs -->
@@ -90,9 +90,9 @@
 
 <!-- ================== STYLES ================== -->
 <style>
-/* --- Fond de page moderne --- */
+/* --- Fond de page moderne - Black & White Theme --- */
 body {
-    background: linear-gradient(135deg, #6c63ff, #42a5f5);
+    background: linear-gradient(135deg, #ffffff, #f5f5f5);
     font-family: "Segoe UI", sans-serif;
 }
 
@@ -100,29 +100,74 @@ body {
 .job-card {
     background: #fff;
     border-radius: 15px;
-    padding: 30px;
+    padding: 25px;
     box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
     transition: transform .2s ease;
+    margin: 20px auto;
 }
 .job-card:hover {
     transform: translateY(-5px);
 }
 
-/* --- Titre --- */
+/* --- Responsive container --- */
+@media (max-width: 768px) {
+    .job-card {
+        padding: 20px;
+        margin: 10px;
+        max-width: 100% !important;
+    }
+    .main-title h1 {
+        font-size: 1.8rem;
+        margin-top: 15px;
+    }
+    .main-title p {
+        font-size: 1rem;
+        margin-bottom: 20px;
+    }
+    .tabs {
+        gap: 5px;
+    }
+    .tab-button {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .job-card {
+        padding: 15px;
+        border-radius: 10px;
+    }
+    .main-title h1 {
+        font-size: 1.6rem;
+    }
+    .form-control {
+        padding: 8px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    .btn {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+/* --- Titre - Black & White Theme --- */
 .main-title h1 {
     text-align: center;
     font-size: 2.2rem;
     font-weight: bold;
-    color: #fff;
-    margin-top: 30px;
+    color: #000000;
+    margin-top: 20px;
+    margin-bottom: 10px;
 }
 .main-title p {
     text-align: center;
-    color: #eee;
-    margin-bottom: 20px;
+    color: #333333;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
 }
 
-/* --- Onglets --- */
+/* --- Onglets - Black & White Theme --- */
 .tabs {
     display: flex;
     justify-content: center;
@@ -137,14 +182,15 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
+    color: #333333;
 }
 .tab-button.active {
-    background: #6c63ff;
+    background: #000000;
     color: white;
-    box-shadow: 0px 4px 12px rgba(108, 99, 255, 0.4);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4);
 }
 .tab-button:hover {
-    background: #6c63ff;
+    background: #333333;
     color: white;
 }
 
@@ -162,12 +208,12 @@ body {
     transition: 0.3s;
 }
 .form-control:focus {
-    border-color: #6c63ff;
-    box-shadow: 0px 0px 8px rgba(108, 99, 255, 0.3);
+    border-color: #000000;
+    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
     outline: none;
 }
 
-/* --- Boutons --- */
+/* --- Boutons - Black & White Theme --- */
 .btn {
     border-radius: 25px;
     padding: 12px;
@@ -175,18 +221,22 @@ body {
     transition: 0.3s ease;
 }
 .btn-primary {
-    background: #6c63ff;
+    background: #000000;
     border: none;
+    color: white;
 }
 .btn-primary:hover {
-    background: #574bdb;
+    background: #333333;
+    color: white;
 }
 .btn-secondary {
-    background: #f39c12;
+    background: #666666;
     border: none;
+    color: white;
 }
 .btn-secondary:hover {
-    background: #d68910;
+    background: #999999;
+    color: white;
 }
 
 /* --- Alignement --- */

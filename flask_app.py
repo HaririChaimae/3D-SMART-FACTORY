@@ -27,7 +27,235 @@ import base64
 from parsing import parse_cv
 from pathlib import Path
 
-app = Flask(__name__)
+# Import functions from app.py for question generation
+# We'll define Flask-compatible versions without Streamlit dependencies
+
+# ========== FLASK-COMPATIBLE QUESTION GENERATION ==========
+def get_pdf_files_info():
+    """Retourne des infos sur les PDFs dans le dossier data pour le cache"""
+    pdf_files = []
+    if os.path.exists("data"):
+        for file_name in os.listdir("data"):
+            if file_name.lower().endswith('.pdf'):
+                file_path = os.path.join("data", file_name)
+                pdf_files.append({
+                    'name': file_name,
+                    'size': os.path.getsize(file_path),
+                    'mtime': os.path.getmtime(file_path)
+                })
+    return pdf_files
+
+def build_vector_store_cached(pdf_files_info):
+    """Cache la construction du vector store basé sur les infos des PDFs"""
+    if not pdf_files_info:
+        print("Aucun PDF trouvé dans le dossier \"data\"")
+        return None, []
+
+    print('Construction de la base de connaissances...')
+    index, texts = build_vector_store()
+
+    if index is None:
+        print("Impossible de construire la base de connaissances")
+        return None, []
+
+    print(f'Base de connaissances construite avec {len(texts)} documents')
+    return index, texts
+
+def generate_interview_content():
+    """Génère les questions à partir de la base de connaissances (Flask version)"""
+    # Obtenir les infos des PDFs pour le cache
+    pdf_files_info = get_pdf_files_info()
+
+    if not pdf_files_info:
+        knowledge_chunks = []
+        index, texts = None, []
+    else:
+        # Construire le vector store
+        index, texts = build_vector_store_cached(tuple(
+            (pdf['name'], pdf['size'], pdf['mtime']) for pdf in pdf_files_info
+        ))
+
+        if index and texts:
+            # Rechercher dans la base de connaissances
+            query = "programmation développement techniques Python"
+            knowledge_chunks = search_knowledge(query, index, texts, top_k=3)
+        else:
+            knowledge_chunks = []
+
+    # Générer les questions
+    try:
+        questions = generate_questions_from_knowledge(knowledge_chunks, n=3)
+    except Exception as e:
+        print(f"Error generating questions: {e}")
+        questions = []
+
+    if not questions or all(not q.strip() for q in questions):
+        questions = [
+            "Quelles sont les meilleures pratiques en programmation ?",
+            "Décrivez les fonctionnalités principales du langage Python.",
+            "Comment résoudriez-vous un problème complexe en programmation ?"
+        ]
+
+    # Générer les réponses correctes
+    correct_answers = {}
+
+    for i, q in enumerate(questions, 1):
+        try:
+            if index and texts:
+                answer = generate_answer_for_question(q, index, texts)
+            else:
+                answer = f"Réponse basée sur les meilleures pratiques pour la question: {q[:50]}..."
+
+            correct_answers[q] = answer
+
+        except Exception as e:
+            print(f"Error generating answer for question {i}: {e}")
+            correct_answers[q] = f"Réponse par défaut - erreur de génération"
+
+    return questions, correct_answers
+
+# ========== QUESTION GENERATION FUNCTIONS ==========
+def generate_questions_from_knowledge(knowledge_chunks, n=3):
+    context = "\n---\n".join(knowledge_chunks[:3])[:3000]
+    prompt = f"""
+    Voici un extrait de la base de connaissances technique :
+    {context}
+
+    Générez {n} exercices pratiques en français basés uniquement sur ce contenu.
+
+    Chaque exercice doit suivre exactement ce format :
+
+    Exercice : [Titre clair et court]
+    Description : [Explication complète de la tâche, avec détails sur les entrées, sorties attendues,
+    et contraintes éventuelles. Rédigez comme une consigne d'énoncé.]
+
+    ⚠️ Contraintes :
+    - Ne mettez pas de numérotation automatique (pas de 1., 2., etc.).
+    - Ne répondez qu'avec les exercices, rien d'autre.
+    - N'utilisez pas de saisie avec input(). Les exercices doivent définir les valeurs d'entrée sous forme
+    de variables ou de paramètres déjà fournis, jamais par interaction utilisateur.
+    """
+
+    try:
+        # Use Google Gemini
+        try:
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompt)
+            text = response.text.strip()
+        except Exception as e:
+            print(f"❌ Gemini question generation failed: {e}")
+            raise Exception("Gemini failed to generate questions")
+
+        # Split on "Exercice :" and keep everything together
+        raw_exercises = re.split(r"(?=Exercice\s*:)", text)
+        questions = [ex.strip() for ex in raw_exercises if ex.strip()]
+
+        return questions[:n]
+    except Exception as e:
+        print(f"Error generating questions: {e}")
+        # Fallback: generate questions directly from PDF content
+        return generate_questions_from_pdf_fallback(n)
+
+def generate_questions_from_pdf_fallback(n=3):
+    """Generate questions directly from PDF content when API fails"""
+    try:
+        pdf_path = "data/IT_exercices.pdf"
+        if os.path.exists(pdf_path):
+            pdf_text = extract_text_from_pdf(pdf_path)
+
+            # Parse exercises from PDF text
+            exercises = []
+            lines = pdf_text.split('\n')
+
+            current_exercise = ""
+            in_exercise = False
+
+            for line in lines:
+                line = line.strip()
+                if line.startswith("Exercice "):
+                    if current_exercise:
+                        exercises.append(current_exercise.strip())
+                    current_exercise = line + "\n"
+                    in_exercise = True
+                elif in_exercise and line:
+                    if line.startswith("Correction :"):
+                        # Convert input() calls to variable assignments
+                        current_exercise += "Description : Écrivez un programme qui "
+                        continue
+                    elif "input(" in line:
+                        # Replace input calls with variable assignments
+                        if "nombre1" in line:
+                            current_exercise += "Définissez nombre1 = 5 et nombre2 = 3 comme variables.\n"
+                        elif "nombre" in line and "pair" in current_exercise.lower():
+                            current_exercise += "Définissez nombre = 7 comme variable.\n"
+                        elif "a" in line and "b" in line and "c" in line:
+                            current_exercise += "Définissez a = 10, b = 25, c = 15 comme variables.\n"
+                        continue
+                    elif "print(" in line:
+                        current_exercise += "Affichez le résultat avec print().\n"
+                        continue
+                    elif line and not line.startswith("#"):
+                        current_exercise += line + "\n"
+
+            if current_exercise:
+                exercises.append(current_exercise.strip())
+
+            # Convert to required format
+            formatted_exercises = []
+            for exercise in exercises[:n]:
+                if "Somme de deux nombres" in exercise:
+                    formatted_exercises.append("""Exercice : Calcul de la somme de deux nombres
+Description : Écrivez une fonction en Python qui calcule la somme de deux nombres donnés. Définissez les valeurs des deux nombres comme des variables au début de votre code (par exemple, nombre1 = 5 et nombre2 = 3). La fonction doit retourner la somme de ces deux nombres. Testez votre fonction en affichant le résultat avec print().""")
+                elif "pair ou impair" in exercise:
+                    formatted_exercises.append("""Exercice : Vérification de parité d'un nombre
+Description : Écrivez une fonction en Python qui détermine si un nombre donné est pair ou impair. Définissez le nombre à vérifier comme une variable au début de votre code (par exemple, nombre = 7). La fonction doit retourner une chaîne de caractères indiquant si le nombre est "pair" ou "impair". Testez votre fonction en affichant le résultat avec print().""")
+                elif "plus grand" in exercise:
+                    formatted_exercises.append("""Exercice : Recherche du plus grand nombre parmi trois
+Description : Écrivez une fonction en Python qui trouve le plus grand nombre parmi trois nombres donnés. Définissez les trois nombres comme des variables au début de votre code (par exemple, a = 10, b = 25, c = 15). La fonction doit retourner le plus grand des trois nombres. Testez votre fonction en affichant le résultat avec print().""")
+
+            return formatted_exercises
+
+    except Exception as e:
+        print(f"Error in PDF fallback: {e}")
+
+    return []
+
+# ========== ANSWER GENERATION FUNCTION ==========
+def generate_answer_for_question(question, index=None, texts=None, max_context_length=1500):
+    """Génère une réponse à une question en utilisant OpenRouter ou Gemini"""
+    try:
+        # Recherche dans la base de connaissances si disponible
+        context = ""
+        if index and texts:
+            relevant = search_knowledge(question, index, texts, top_k=2)
+            if relevant:
+                context = "\n".join(relevant)[:max_context_length]
+
+        prompt = f"""
+        Question d'entretien :
+        {question}
+
+        {"Contexte (issu du PDF corrigé) :" + context if context else ""}
+
+        Donne une réponse complète et pédagogique en français.
+        Explique le concept et fournis un exemple de code si applicable.
+        """
+
+        # Use Google Gemini
+        try:
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompt)
+            print("✅ Réponse générée avec Gemini")
+            return response.text.strip()
+        except Exception as e:
+            print(f"⚠️ Gemini failed: {e}")
+            return "Réponse par défaut - IA temporairement indisponible"
+
+    except Exception as e:
+        print(f"❌ Erreur génération réponse: {e}")
+        return "Réponse non disponible - erreur système."
+
+app = Flask(__name__, template_folder='.')
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
 # Configure logging
@@ -339,13 +567,136 @@ def recruiter_dashboard():
     recruiter = session['user']
     recruiter_id = recruiter.get('id') if isinstance(recruiter, dict) else recruiter['id']
 
-    candidates = db.get_candidates_by_recruiter(recruiter_id)
     jobs = db.get_jobs_by_recruiter(recruiter_id)
 
+    # Get all applications (resumes) for this recruiter's jobs
+    applications = []
+    candidate_ids = set()  # Track unique candidates with active applications
+    if jobs:
+        for job in jobs:
+            job_applications = db.get_resumes_by_job(job['id'])
+            if job_applications:
+                # Add job info to each application
+                for app in job_applications:
+                    app['job_title'] = job['title']
+                    app['job_company'] = job['company_name']
+                    applications.append(app)
+                    candidate_ids.add(app['candidate_id'])
+
+    # Only get candidates who have active applications to current jobs
+    candidates = []
+    if candidate_ids:
+        for candidate_id in candidate_ids:
+            candidate = db.get_candidate_by_id(candidate_id)
+            if candidate:
+                # Parse evaluation_results JSON if it exists
+                if candidate.get('evaluation_results'):
+                    try:
+                        candidate['evaluation_results'] = json.loads(candidate['evaluation_results'])
+                        print(f"🔍 DEBUG - Parsed evaluation_results for candidate {candidate_id}: {candidate['evaluation_results']}")
+                    except (json.JSONDecodeError, TypeError) as e:
+                        print(f"❌ DEBUG - Failed to parse evaluation_results for candidate {candidate_id}: {e}")
+                        candidate['evaluation_results'] = {}
+                else:
+                    candidate['evaluation_results'] = {}
+
+                # Ensure average_score is a float
+                if candidate.get('average_score') is not None:
+                    try:
+                        candidate['average_score'] = float(candidate['average_score'])
+                    except (ValueError, TypeError):
+                        candidate['average_score'] = 0.0
+
+                candidates.append(candidate)
+
     return render_template("recruiter_dashboard.html",
+                           recruiter=recruiter,
+                           candidates=candidates,
+                           jobs=jobs,
+                           applications=applications)
+
+@app.route("/recruiter/add-job", methods=['GET', 'POST'])
+def add_job():
+    if 'user' not in session or session.get('user_type') != 'recruiter':
+        flash('Please login first', 'error')
+        return redirect(url_for('login'))
+
+    recruiter = session['user']
+    recruiter_id = recruiter.get('id') if isinstance(recruiter, dict) else recruiter['id']
+
+    if request.method == 'POST':
+        try:
+            # Get form data
+            company_name = request.form.get('company_name')
+            position = request.form.get('position')
+            title = request.form.get('title')
+            description = request.form.get('description')
+            location = request.form.get('location', 'Remote')
+            job_type = request.form.get('job_type', 'full-time')
+            salary_from = request.form.get('salary_from')
+            salary_to = request.form.get('salary_to')
+            salary_currency = request.form.get('salary_currency', 'EUR')
+            skills = request.form.get('skills', '')
+            apply_url = request.form.get('apply_url')
+
+            # Convert salary to float if provided
+            salary_from = float(salary_from) if salary_from and salary_from.strip() else None
+            salary_to = float(salary_to) if salary_to and salary_to.strip() else None
+
+            # Parse skills (comma-separated)
+            skills_list = [s.strip() for s in skills.split(',') if s.strip()]
+
+            # Get or create company
+            company_id = db.add_company(company_name, "", False, "", "")
+
+            if not company_id:
+                flash('Error creating company', 'error')
+                return redirect(request.url)
+
+            # Handle job image upload
+            job_image = None
+            if 'job_image' in request.files:
+                image_file = request.files['job_image']
+                if image_file and image_file.filename:
+                    image_data = image_file.read()
+                    job_image = base64.b64encode(image_data).decode('utf-8')
+
+            # Add job to database
+            db.add_job(
+                company_id=company_id,
+                recruiter_id=recruiter_id,
+                position=position,
+                title=title,
+                description=description,
+                url="",
+                job_type=job_type,
+                posted=request.form.get('posted_date'),
+                location=location,
+                skills=skills_list,
+                salary_from=salary_from,
+                salary_to=salary_to,
+                salary_currency=salary_currency,
+                equity_from=0.0,
+                equity_to=0.0,
+                perks=[],
+                apply_url=apply_url,
+                job_image=job_image
+            )
+
+            flash('Job added successfully!', 'success')
+            return redirect(url_for('jobs'))
+
+        except Exception as e:
+            flash(f'Error adding job: {str(e)}', 'error')
+            return redirect(request.url)
+
+    # GET request - show form
+    from datetime import datetime
+    companies = db.get_all_companies()
+    return render_template("add_job.html",
                          recruiter=recruiter,
-                         candidates=candidates,
-                         jobs=jobs)
+                         companies=companies,
+                         today=datetime.now().date())
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
@@ -361,11 +712,86 @@ def admin_dashboard():
     completion_rate = (completed_tests / total_candidates * 100) if total_candidates > 0 else 0
 
     return render_template("admin_dashboard.html",
-                         recruiters=recruiters,
-                         candidates=candidates,
-                         total_candidates=total_candidates,
-                         completed_tests=completed_tests,
-                         completion_rate=completion_rate)
+                          recruiters=recruiters,
+                          candidates=candidates,
+                          total_candidates=total_candidates,
+                          completed_tests=completed_tests,
+                          completion_rate=completion_rate)
+
+@app.route("/admin/add-recruiter", methods=['POST'])
+def add_recruiter():
+    """Add a new recruiter"""
+    if 'user' not in session or session.get('user_type') != 'admin':
+        return jsonify({'success': False, 'error': 'Not authorized'}), 403
+
+    try:
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        # Handle profile picture upload
+        profile_picture = None
+        if 'profile_picture' in request.files:
+            image_file = request.files['profile_picture']
+            if image_file and image_file.filename:
+                image_data = image_file.read()
+                profile_picture = base64.b64encode(image_data).decode('utf-8')
+
+        # Add recruiter to database
+        recruiter_id = db.add_recruiter(username, email, password, profile_picture)
+
+        if recruiter_id:
+            flash('Recruiter added successfully!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Email already exists', 'error')
+            return redirect(url_for('admin_dashboard'))
+
+    except Exception as e:
+        flash(f'Error adding recruiter: {str(e)}', 'error')
+        return redirect(url_for('admin_dashboard'))
+
+@app.route("/admin/delete-recruiter/<int:recruiter_id>", methods=['POST'])
+def delete_recruiter(recruiter_id):
+    """Delete a recruiter"""
+    if 'user' not in session or session.get('user_type') != 'admin':
+        return jsonify({'success': False, 'error': 'Not authorized'}), 403
+
+    try:
+        # Check if recruiter exists
+        recruiter = db.get_recruiter_by_id(recruiter_id)
+        if not recruiter:
+            return jsonify({'success': False, 'error': 'Recruiter not found'}), 404
+
+        # Delete the recruiter
+        db.delete_recruiter(recruiter_id)
+
+        return jsonify({'success': True, 'message': 'Recruiter deleted successfully'})
+
+    except Exception as e:
+        print(f"Error deleting recruiter: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/admin/delete-candidate/<int:candidate_id>", methods=['POST'])
+def delete_candidate(candidate_id):
+    """Delete a candidate"""
+    if 'user' not in session or session.get('user_type') != 'admin':
+        return jsonify({'success': False, 'error': 'Not authorized'}), 403
+
+    try:
+        # Check if candidate exists
+        candidate = db.get_candidate_by_id(candidate_id)
+        if not candidate:
+            return jsonify({'success': False, 'error': 'Candidate not found'}), 404
+
+        # Delete the candidate
+        db.delete_candidate(candidate_id)
+
+        return jsonify({'success': True, 'message': 'Candidate deleted successfully'})
+
+    except Exception as e:
+        print(f"Error deleting candidate: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route("/logout")
 def logout():
@@ -382,8 +808,10 @@ def candidate_login():
 
         candidate = db.get_candidate(email, password)
         if candidate:
-            session['user'] = candidate
+            # Store only essential data in session to avoid cookie size limits
+            session['user_id'] = candidate['id']
             session['user_type'] = "candidate"
+            session['username'] = candidate['username']
             flash('Login successful!', 'success')
             return redirect(url_for('candidate_test'))
         else:
@@ -397,11 +825,16 @@ def candidate_login():
 @app.route("/candidate/test")
 def candidate_test():
     """Display candidate technical test"""
-    if 'user' not in session or session.get('user_type') != 'candidate':
+    if 'user_id' not in session or session.get('user_type') != 'candidate':
         flash('Please login first', 'error')
         return redirect(url_for('candidate_login'))
 
-    candidate = session['user']
+    # Get candidate data from database using user_id
+    candidate_id = session['user_id']
+    candidate = db.get_candidate_by_id(candidate_id)
+    if not candidate:
+        flash('Candidate data not found', 'error')
+        return redirect(url_for('candidate_login'))
 
     # Get test questions
     questions_text = candidate.get('questions', '')
@@ -410,17 +843,22 @@ def candidate_test():
         questions = [q.strip() for q in questions_text.split('\n\n') if q.strip()]
         return render_template('candidate_test.html', candidate=candidate, questions=questions)
     else:
-        flash('No test questions found', 'error')
+        flash('No test questions found. Please wait for the recruiter to send you a test invitation.', 'error')
         return redirect(url_for('jobs'))
 
 @app.route("/candidate/submit-test", methods=['POST'])
 def submit_candidate_test():
     """Handle candidate test submission"""
-    if 'user' not in session or session.get('user_type') != 'candidate':
+    if 'user_id' not in session or session.get('user_type') != 'candidate':
         flash('Please login first', 'error')
         return redirect(url_for('candidate_login'))
 
-    candidate = session['user']
+    # Get candidate data from database
+    candidate_id = session['user_id']
+    candidate = db.get_candidate_by_id(candidate_id)
+    if not candidate:
+        flash('Candidate data not found', 'error')
+        return redirect(url_for('candidate_login'))
 
     # Get test questions
     questions_text = candidate.get('questions', '')
@@ -443,20 +881,65 @@ def submit_candidate_test():
         try:
             import json
             stored_answers = json.loads(candidate['correct_answers'])
+            print(f"🔍 DEBUG - Stored correct answers: {stored_answers}")
             # Match stored answers to current questions
             for question in questions:
                 if question in stored_answers:
                     correct_answers[question] = stored_answers[question]
-        except:
+                    print(f"🔍 DEBUG - Matched answer for question: {question[:50]}...")
+                else:
+                    print(f"⚠️ DEBUG - No stored answer for question: {question[:50]}...")
+        except Exception as e:
+            print(f"❌ DEBUG - Error parsing correct answers: {e}")
             correct_answers = {}
+
+    # If no stored answers, generate them on the fly
+    if not correct_answers:
+        print("🔄 DEBUG - No stored answers found, generating on the fly...")
+        try:
+            # Build knowledge base for answer generation
+            pdf_files_info = get_pdf_files_info()
+            if pdf_files_info:
+                index, texts = build_vector_store_cached(tuple(
+                    (pdf['name'], pdf['size'], pdf['mtime']) for pdf in pdf_files_info
+                ))
+            else:
+                index, texts = None, []
+
+            # Generate answers for each question
+            for question in questions:
+                try:
+                    if index and texts:
+                        answer = generate_answer_for_question(question, index, texts)
+                    else:
+                        answer = f"Réponse par défaut pour: {question[:50]}..."
+                    correct_answers[question] = answer
+                    print(f"✅ DEBUG - Generated answer for: {question[:50]}...")
+                except Exception as e:
+                    correct_answers[question] = f"Erreur génération: {e}"
+                    print(f"❌ DEBUG - Error generating answer: {e}")
+        except Exception as e:
+            print(f"❌ DEBUG - Error in answer generation: {e}")
+            # Fallback: simple default answers
+            for question in questions:
+                correct_answers[question] = "Réponse par défaut - génération échouée"
 
     # Evaluate answers
     try:
+        print(f"🔍 DEBUG EVALUATION - Starting evaluation for {len(user_answers)} answers")
+        print(f"🔍 DEBUG EVALUATION - User answers: {user_answers}")
+        print(f"🔍 DEBUG EVALUATION - Correct answers: {correct_answers}")
+
         evaluation_results = evaluate_answers(user_answers, correct_answers)
+
+        print(f"🔍 DEBUG EVALUATION - Results: {evaluation_results}")
 
         # Calculate average score
         scores = [res['score'] for res in evaluation_results.values() if isinstance(res.get('score'), (int, float))]
         average_score = sum(scores) / len(scores) if scores else 0.0
+
+        print(f"🔍 DEBUG EVALUATION - Scores: {scores}")
+        print(f"🔍 DEBUG EVALUATION - Average score: {average_score}")
 
         # Format answers text
         answers_text = "\n\n".join([
@@ -473,24 +956,60 @@ def submit_candidate_test():
             average_score
         )
 
-        # Send notification to recruiter
+        print(f"✅ DEBUG EVALUATION - Successfully saved evaluation for candidate {candidate['id']}")
+
+        # Send detailed notification to recruiter with correct answers and justifications
         recruiter_email = db.get_recruiter_email_by_candidate(candidate['id'])
         if recruiter_email:
-            subject = f"Test Completed - {candidate['username']}"
+            subject = f"Test Completed - {candidate['username']} - Score: {average_score:.2f}/10"
+
+            # Build detailed results section
+            detailed_results = ""
+            for i, question in enumerate(questions, 1):
+                result = evaluation_results.get(question, {})
+                user_answer = result.get('user', 'N/A')
+                correct_answer = result.get('correct', 'N/A')
+                score = result.get('score', 0)
+                justification = result.get('justification', 'N/A')
+
+                print(f"🔍 DEBUG EMAIL - Question {i}: score={score}, justification='{justification[:50]}...'")
+
+                detailed_results += f"""
+
+QUESTION {i}: {question[:100]}{'...' if len(question) > 100 else ''}
+
+CANDIDATE'S ANSWER:
+{user_answer}
+
+CORRECT ANSWER:
+{correct_answer}
+
+SCORE: {score:.2f}/1.0
+JUSTIFICATION: {justification}
+
+{'─' * 80}"""
+
             body = f"""Dear Recruiter,
 
 The candidate {candidate['username']} ({candidate['email']}) has completed their technical test.
 
-Test Results Summary:
-- Average Score: {average_score:.2f}
+TEST RESULTS SUMMARY:
+- Average Score: {average_score:.2f}/10 ({average_score*10:.1f}%)
 - Questions Answered: {len(questions)}
+- Test Completed: {candidate.get('test_completed_at', 'N/A')}
 
-Please log in to the recruiter dashboard to view detailed results.
+DETAILED RESULTS:{detailed_results}
+
+Please log in to the recruiter dashboard to view the complete evaluation and manage this candidate.
 
 Best regards,
 Recruitment System"""
 
-            send_email(recruiter_email, subject, body)
+            email_sent = send_email(recruiter_email, subject, body)
+            if email_sent:
+                print(f"✅ DEBUG EMAIL - Successfully sent detailed results to {recruiter_email}")
+            else:
+                print(f"❌ DEBUG EMAIL - Failed to send email to {recruiter_email}")
 
         flash('Test submitted successfully!', 'success')
 
@@ -575,6 +1094,19 @@ def apply_for_job(job_id):
                 existing_candidate = db.get_candidate_by_email(email)
                 if existing_candidate:
                     candidate_id = existing_candidate['id']
+                    # Update candidate's recruiter association if different
+                    if existing_candidate['recruiter_id'] != job['recruiter_id']:
+                        print(f"🔄 Updating candidate {candidate_id} recruiter from {existing_candidate['recruiter_id']} to {job['recruiter_id']}")
+                        conn = db.get_db_connection()
+                        cur = conn.cursor()
+                        if db.DB_TYPE == 'sqlite':
+                            cur.execute("UPDATE candidates SET recruiter_id = ? WHERE id = ?", (job['recruiter_id'], candidate_id))
+                        else:
+                            cur.execute("UPDATE candidates SET recruiter_id = %s WHERE id = %s", (job['recruiter_id'], candidate_id))
+                        conn.commit()
+                        cur.close()
+                        conn.close()
+
                     # Ensure candidate has a password for test access
                     if not existing_candidate.get('password'):
                         # Generate password if missing
@@ -595,7 +1127,7 @@ def apply_for_job(job_id):
                 else:
                     # Create job matching info for the candidate
                     job_matching_info = f"Applied to: {job['title']} at {job['company_name']} - {job['location']} ({job['type']})"
-    
+
                     # Create new candidate with generated password
                     generated_password = db.generate_password()
                     candidate_added, _ = db.add_candidate(name, email, job_matching_info, "", job['recruiter_id'])
@@ -710,10 +1242,112 @@ def recruiter_profile(recruiter_id):
                 total_applications += len(applications)
 
     return render_template("recruiter_profile.html",
-                         recruiter=recruiter,
-                         jobs=jobs,
-                         total_jobs=total_jobs,
-                         total_applications=total_applications)
+                          recruiter=recruiter,
+                          jobs=jobs,
+                          total_jobs=total_jobs,
+                          total_applications=total_applications)
+
+@app.route("/recruiter/send-test", methods=['POST'])
+def send_test_to_applicant():
+    """Send test invitation to individual applicant"""
+    if 'user' not in session or session.get('user_type') != 'recruiter':
+        return jsonify({'success': False, 'error': 'Not authorized'}), 403
+
+    data = request.get_json()
+    application_id = data.get('application_id')
+    email = data.get('email')
+    username = data.get('username')
+    job_title = data.get('job_title')
+
+    if not all([application_id, email, username, job_title]):
+        return jsonify({'success': False, 'error': 'Missing required data'}), 400
+
+    try:
+        # Get candidate by email (since we have the email from the application)
+        candidate = db.get_candidate_by_email(email)
+        if not candidate:
+            return jsonify({'success': False, 'error': 'Candidate not found'}), 404
+
+        # Generate questions for this job
+        questions, correct_answers = generate_interview_content()
+        questions_text = "\n\n".join([f"Question {i+1}: {q}" for i, q in enumerate(questions, 1)])
+
+        print(f"🔍 DEBUG - Generated {len(questions)} questions and {len(correct_answers)} answers")
+        print(f"🔍 DEBUG - Sample question: {questions[0][:100] if questions else 'None'}...")
+        print(f"🔍 DEBUG - Sample answer: {list(correct_answers.values())[0][:100] if correct_answers else 'None'}...")
+
+        # Update candidate with questions and correct answers
+        db.update_candidate_questions(candidate['id'], questions_text, correct_answers)
+
+        # Check if candidate already has a password
+        if not candidate.get('password'):
+            return jsonify({'success': False, 'error': 'Candidate password not found'}), 404
+
+        # Generate test link
+        test_link = f"http://localhost:5000/candidate/login?email={email}"
+
+        subject = f"Technical Interview Test - {job_title} Position"
+        body = f"""Dear {username},
+
+Congratulations! You have been selected to take the technical interview test for the {job_title} position.
+
+Your test credentials:
+Email: {email}
+Password: {candidate['password']}
+
+Please click the link below to access your test:
+{test_link}
+
+Instructions:
+1. Click the link above
+2. Log in with your email and password
+3. Complete the technical exercises
+4. Submit your answers
+
+The test consists of {len(questions)} programming exercises. You will have time to solve each problem and submit your code.
+
+Good luck!
+
+Best regards,
+Recruitment Team"""
+
+        # Send email
+        email_sent = send_email(email, subject, body)
+        if email_sent:
+            return jsonify({'success': True, 'message': 'Test invitation sent successfully'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to send email'}), 500
+
+    except Exception as e:
+        print(f"Error sending test to applicant: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route("/recruiter/delete-job/<int:job_id>", methods=['POST'])
+def delete_job(job_id):
+    """Delete a job posting"""
+    if 'user' not in session or session.get('user_type') != 'recruiter':
+        return jsonify({'success': False, 'error': 'Not authorized'}), 403
+
+    recruiter = session['user']
+    recruiter_id = recruiter.get('id') if isinstance(recruiter, dict) else recruiter['id']
+
+    try:
+        # Get the job to verify ownership
+        job = db.get_job_by_id(job_id)
+        if not job:
+            return jsonify({'success': False, 'error': 'Job not found'}), 404
+
+        if job['recruiter_id'] != recruiter_id:
+            return jsonify({'success': False, 'error': 'Not authorized to delete this job'}), 403
+
+        # Delete the job
+        db.delete_job(job_id)
+
+        return jsonify({'success': True, 'message': 'Job deleted successfully'})
+
+    except Exception as e:
+        print(f"Error deleting job: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ========== UTILITY FUNCTIONS ==========
 def process_cv_cached(file_content, file_name):
@@ -802,5 +1436,23 @@ def process_job_matching(cv_data, jobs_data):
     scored_jobs.sort(key=lambda j: j["match_score"], reverse=True)
     return scored_jobs[:3]
 
+@app.route("/debug/evaluation")
+def debug_evaluation():
+    """Debug route to test evaluation system"""
+    from agent import test_evaluation
+
+    try:
+        score, justification = test_evaluation()
+        return jsonify({
+            "success": True,
+            "score": score,
+            "justification": justification
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
+
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(port=5000,host="0.0.0.0" ,debug=True)

@@ -6,10 +6,10 @@
 <section style="padding: 4rem 0; background: linear-gradient(135deg, var(--gray-50), var(--gray-100)); border-bottom: 1px solid var(--gray-200);">
     <div class="container">
         <div class="fade-in-up" style="text-align: center;">
-            <h1 style="font-size: 3rem; font-weight: 800; color: var(--gray-800); margin-bottom: 1rem;">
-                Découvrez les <span style="color: var(--primary-color);">meilleures</span> opportunités
+            <h1 style="font-size: 3rem; font-weight: 800; color: black; margin-bottom: 1rem;">
+                Découvrez les meilleures opportunités
             </h1>
-            <p style="font-size: 1.2rem; color: var(--gray-600); max-width: 600px; margin: 0 auto;">
+            <p style="font-size: 1.2rem; color: var(--gray-600); max-width: 600px; margin: 0 auto; color: white;">
                 Trouvez le poste idéal grâce à notre intelligence artificielle de matching avancé
             </p>
         </div>
@@ -141,14 +141,14 @@
         {% if jobs %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 2rem;">
             {% for job in jobs %}
-            <div class="card-professional fade-in-up job-card" 
-                 data-title="{{ job.title }}"
-                 data-company="{{ job.company_name or 'Entreprise' }}"
-                 data-location="{{ job.location or 'Non spécifié' }}"
-                 data-type="{{ job.type or 'Non spécifié' }}"
-                 data-description="{{ job.description|e }}"
-                 data-salary="{{ job.salary_currency or '€' }} {{ job.salary_from }} - {{ job.salary_to }}"
-                 data-url="{{ url_for('apply_for_job', job_id=job.id) }}">
+            <div class="card-professional fade-in-up job-card"
+                  data-title="{{ job.title }}"
+                  data-company="{{ job.company_name or 'Entreprise' }}"
+                  data-location="{{ job.location or 'Non spécifié' }}"
+                  data-type="{{ job.type or 'Non spécifié' }}"
+                  data-description="{{ job.description|e }}"
+                  data-salary="{{ job.salary_currency or '€' }} {{ job.salary_from }} - {{ job.salary_to }}"
+                  data-url="{{ url_for('apply_for_job', job_id=job.id) }}">
                 <!-- Job Header -->
                 <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
                     {% if job.recruiter_picture %}

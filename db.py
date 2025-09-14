@@ -12,7 +12,7 @@ if DATABASE_URL.startswith('sqlite://'):
     # SQLite
     import sqlite3
     DB_TYPE = 'sqlite'
-    print("🔄 Using SQLite database")
+    print("Using SQLite database")
 else:
     # PostgreSQL
     try:
@@ -422,6 +422,41 @@ def get_candidate_by_email(email):
     conn.close()
     return candidate
 
+def get_candidate_by_id(candidate_id):
+    """Get candidate by ID"""
+    conn = get_db_connection()
+
+    if DB_TYPE == 'sqlite':
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, email, password, job_matching, questions, answers, correct_answers, evaluation_results, test_completed, average_score, test_completed_at, recruiter_id FROM candidates WHERE id = ?", (candidate_id,))
+        row = cur.fetchone()
+        if row:
+            candidate = {
+                'id': row[0],
+                'username': row[1],
+                'email': row[2],
+                'password': row[3],
+                'job_matching': row[4],
+                'questions': row[5],
+                'answers': row[6],
+                'correct_answers': row[7],
+                'evaluation_results': row[8],
+                'test_completed': bool(row[9]) if row[9] is not None else False,
+                'average_score': row[10],
+                'test_completed_at': row[11],
+                'recruiter_id': row[12]
+            }
+        else:
+            candidate = None
+    else:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM candidates WHERE id = %s", (candidate_id,))
+        candidate = cur.fetchone()
+
+    cur.close()
+    conn.close()
+    return candidate
+
 def get_candidates_by_recruiter(recruiter_id):
     conn = get_db_connection()
 
@@ -464,23 +499,42 @@ def update_candidate_evaluation(candidate_id, answers, correct_answers, evaluati
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        UPDATE candidates
-        SET answers = %s,
-            correct_answers = %s,
-            evaluation_results = %s,
-            average_score = %s,
-            test_completed = TRUE,
-            test_completed_at = %s
-        WHERE id = %s
-    """, (
-        answers,
-        json.dumps(correct_answers),
-        json.dumps(evaluation_results),
-        average_score,
-        datetime.now(),
-        candidate_id
-    ))
+    if DB_TYPE == 'sqlite':
+        cur.execute("""
+            UPDATE candidates
+            SET answers = ?,
+                correct_answers = ?,
+                evaluation_results = ?,
+                average_score = ?,
+                test_completed = 1,
+                test_completed_at = ?
+            WHERE id = ?
+        """, (
+            answers,
+            json.dumps(correct_answers),
+            json.dumps(evaluation_results),
+            average_score,
+            datetime.now(),
+            candidate_id
+        ))
+    else:
+        cur.execute("""
+            UPDATE candidates
+            SET answers = %s,
+                correct_answers = %s,
+                evaluation_results = %s,
+                average_score = %s,
+                test_completed = TRUE,
+                test_completed_at = %s
+            WHERE id = %s
+        """, (
+            answers,
+            json.dumps(correct_answers),
+            json.dumps(evaluation_results),
+            average_score,
+            datetime.now(),
+            candidate_id
+        ))
 
     conn.commit()
     cur.close()
@@ -617,19 +671,62 @@ def get_all_jobs():
 
 def get_jobs_by_recruiter(recruiter_id):
     conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("""
-        SELECT j.*, c.name as company_name, c.url as company_url, c.remote_friendly, c.market, c.size,
-               r.username as recruiter_name, r.email as recruiter_email, r.profile_picture as recruiter_picture
-        FROM jobs j
-        JOIN companies c ON j.company_id = c.id
-        JOIN recruiters r ON j.recruiter_id = r.id
-        WHERE j.recruiter_id = %s
-        ORDER BY j.posted DESC
-    """, (recruiter_id,))
-    jobs = cur.fetchall()
+
+    if DB_TYPE == 'sqlite':
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT j.id, j.company_id, j.recruiter_id, j.position, j.title, j.description, j.url, j.type,
+                   j.posted, j.location, j.skills, j.salary_from, j.salary_to, j.salary_currency,
+                   j.equity_from, j.equity_to, j.perks, j.apply_url, j.job_image,
+                   c.name as company_name, c.url as company_url, c.remote_friendly, c.market, c.size,
+                   r.username as recruiter_name, r.email as recruiter_email, r.profile_picture as recruiter_picture
+            FROM jobs j
+            JOIN companies c ON j.company_id = c.id
+            JOIN recruiters r ON j.recruiter_id = r.id
+            WHERE j.recruiter_id = ?
+            ORDER BY j.posted DESC
+        """, (recruiter_id,))
+
+        columns = [desc[0] for desc in cur.description]
+        rows = cur.fetchall()
+
+        jobs = []
+        for row in rows:
+            job = dict(zip(columns, row))
+            jobs.append(job)
+
+    else:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT j.*, c.name as company_name, c.url as company_url, c.remote_friendly, c.market, c.size,
+                   r.username as recruiter_name, r.email as recruiter_email, r.profile_picture as recruiter_picture
+            FROM jobs j
+            JOIN companies c ON j.company_id = c.id
+            JOIN recruiters r ON j.recruiter_id = r.id
+            WHERE j.recruiter_id = %s
+            ORDER BY j.posted DESC
+        """, (recruiter_id,))
+        jobs = cur.fetchall()
+
     cur.close()
     conn.close()
+
+    # Normalize skills for both database types
+    for job in jobs:
+        skills = job.get("skills", [])
+        if isinstance(skills, str):
+            try:
+                import json
+                skills = json.loads(skills)
+            except:
+                skills = [s.strip() for s in skills.strip("{}").split(",") if s.strip()]
+        elif skills is None:
+            skills = []
+        elif isinstance(skills, list):
+            skills = [str(s).strip() for s in skills]
+
+        job["skills"] = [s.lower() for s in skills]
+
     return jobs
 
 def get_job_by_id(job_id):
@@ -693,11 +790,28 @@ def get_job_by_id(job_id):
 
 def get_jobs_by_company(company_id):
     conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("""
-        SELECT * FROM jobs WHERE company_id = %s ORDER BY posted DESC
-    """, (company_id,))
-    jobs = cur.fetchall()
+
+    if DB_TYPE == 'sqlite':
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, company_id, recruiter_id, position, title, description, url, type, posted, location,
+                   skills, salary_from, salary_to, salary_currency, equity_from, equity_to, perks, apply_url, job_image
+            FROM jobs WHERE company_id = ? ORDER BY posted DESC
+        """, (company_id,))
+        columns = [desc[0] for desc in cur.description]
+        rows = cur.fetchall()
+
+        jobs = []
+        for row in rows:
+            job = dict(zip(columns, row))
+            jobs.append(job)
+    else:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT * FROM jobs WHERE company_id = %s ORDER BY posted DESC
+        """, (company_id,))
+        jobs = cur.fetchall()
+
     cur.close()
     conn.close()
     return jobs
@@ -706,10 +820,57 @@ def delete_job(job_id):
     conn = get_db_connection()
     cur = conn.cursor()
 
+    # First, get all candidates who applied to this job
+    if DB_TYPE == 'sqlite':
+        cur.execute("""
+            SELECT DISTINCT c.id, c.username, c.email
+            FROM candidates c
+            JOIN resumes r ON c.id = r.candidate_id
+            WHERE r.job_id = ?
+        """, (job_id,))
+        candidates_to_check = cur.fetchall()
+    else:
+        cur.execute("""
+            SELECT DISTINCT c.id, c.username, c.email
+            FROM candidates c
+            JOIN resumes r ON c.id = r.candidate_id
+            WHERE r.job_id = %s
+        """, (job_id,))
+        candidates_to_check = cur.fetchall()
+
+    # For each candidate, check if they only applied to this job
+    candidates_to_delete = []
+    for candidate_row in candidates_to_check:
+        candidate_id = candidate_row[0] if DB_TYPE == 'sqlite' else candidate_row['id']
+
+        # Count how many jobs this candidate applied to
+        if DB_TYPE == 'sqlite':
+            cur.execute("""
+                SELECT COUNT(*) FROM resumes WHERE candidate_id = ?
+            """, (candidate_id,))
+            job_count = cur.fetchone()[0]
+        else:
+            cur.execute("""
+                SELECT COUNT(*) FROM resumes WHERE candidate_id = %s
+            """, (candidate_id,))
+            job_count = cur.fetchone()[0]
+
+        # If candidate only applied to this job, mark for deletion
+        if job_count <= 1:  # <= 1 because the resume will be deleted by CASCADE
+            candidates_to_delete.append(candidate_id)
+
+    # Delete the job (this will CASCADE delete resumes)
     if DB_TYPE == 'sqlite':
         cur.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
     else:
         cur.execute("DELETE FROM jobs WHERE id = %s", (job_id,))
+
+    # Delete candidates who only applied to this job
+    for candidate_id in candidates_to_delete:
+        if DB_TYPE == 'sqlite':
+            cur.execute("DELETE FROM candidates WHERE id = ?", (candidate_id,))
+        else:
+            cur.execute("DELETE FROM candidates WHERE id = %s", (candidate_id,))
 
     conn.commit()
     cur.close()
@@ -732,9 +893,22 @@ def delete_company(company_id):
 
 def get_all_companies():
     conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT * FROM companies ORDER BY name")
-    companies = cur.fetchall()
+
+    if DB_TYPE == 'sqlite':
+        cur = conn.cursor()
+        cur.execute("SELECT id, name, url, remote_friendly, market, size FROM companies ORDER BY name")
+        columns = [desc[0] for desc in cur.description]
+        rows = cur.fetchall()
+
+        companies = []
+        for row in rows:
+            company = dict(zip(columns, row))
+            companies.append(company)
+    else:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM companies ORDER BY name")
+        companies = cur.fetchall()
+
     cur.close()
     conn.close()
     return companies
@@ -771,9 +945,22 @@ def get_recruiter_email_by_candidate(candidate_id):
 def get_all_recruiters():
     """Get all recruiters for admin"""
     conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT * FROM recruiters ORDER BY id")
-    recruiters = cur.fetchall()
+
+    if DB_TYPE == 'sqlite':
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, email, password, profile_picture FROM recruiters ORDER BY id")
+        columns = [desc[0] for desc in cur.description]
+        rows = cur.fetchall()
+
+        recruiters = []
+        for row in rows:
+            recruiter = dict(zip(columns, row))
+            recruiters.append(recruiter)
+    else:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM recruiters ORDER BY id")
+        recruiters = cur.fetchall()
+
     cur.close()
     conn.close()
     return recruiters
@@ -781,14 +968,37 @@ def get_all_recruiters():
 def get_all_candidates():
     """Get all candidates for admin"""
     conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("""
-        SELECT c.*, r.username as recruiter_name
-        FROM candidates c
-        LEFT JOIN recruiters r ON c.recruiter_id = r.id
-        ORDER BY c.id
-    """)
-    candidates = cur.fetchall()
+
+    if DB_TYPE == 'sqlite':
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT c.id, c.username, c.email, c.job_matching, c.questions, c.answers, c.correct_answers,
+                   c.evaluation_results, c.test_completed, c.average_score, c.test_completed_at,
+                   c.recruiter_id, c.password, c.current_test_stage, c.math_questions, c.math_answers,
+                   c.math_correct_answers, c.math_evaluation_results, c.math_average_score,
+                   c.math_test_completed, c.math_test_completed_at,
+                   r.username as recruiter_name
+            FROM candidates c
+            LEFT JOIN recruiters r ON c.recruiter_id = r.id
+            ORDER BY c.id
+        """)
+        columns = [desc[0] for desc in cur.description]
+        rows = cur.fetchall()
+
+        candidates = []
+        for row in rows:
+            candidate = dict(zip(columns, row))
+            candidates.append(candidate)
+    else:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT c.*, r.username as recruiter_name
+            FROM candidates c
+            LEFT JOIN recruiters r ON c.recruiter_id = r.id
+            ORDER BY c.id
+        """)
+        candidates = cur.fetchall()
+
     cur.close()
     conn.close()
     return candidates
@@ -963,11 +1173,20 @@ def update_candidate_questions(candidate_id, questions_text, correct_answers):
     import json
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
-        UPDATE candidates
-        SET questions = %s, correct_answers = %s
-        WHERE id = %s
-    """, (questions_text, json.dumps(correct_answers), candidate_id))
+
+    if DB_TYPE == 'sqlite':
+        cur.execute("""
+            UPDATE candidates
+            SET questions = ?, correct_answers = ?
+            WHERE id = ?
+        """, (questions_text, json.dumps(correct_answers), candidate_id))
+    else:
+        cur.execute("""
+            UPDATE candidates
+            SET questions = %s, correct_answers = %s
+            WHERE id = %s
+        """, (questions_text, json.dumps(correct_answers), candidate_id))
+
     conn.commit()
     cur.close()
     conn.close()
@@ -977,11 +1196,20 @@ def update_candidate_math_questions(candidate_id, questions_text, correct_answer
     import json
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
-        UPDATE candidates
-        SET math_questions = %s, math_correct_answers = %s
-        WHERE id = %s
-    """, (questions_text, json.dumps(correct_answers), candidate_id))
+
+    if DB_TYPE == 'sqlite':
+        cur.execute("""
+            UPDATE candidates
+            SET math_questions = ?, math_correct_answers = ?
+            WHERE id = ?
+        """, (questions_text, json.dumps(correct_answers), candidate_id))
+    else:
+        cur.execute("""
+            UPDATE candidates
+            SET math_questions = %s, math_correct_answers = %s
+            WHERE id = %s
+        """, (questions_text, json.dumps(correct_answers), candidate_id))
+
     conn.commit()
     cur.close()
     conn.close()
@@ -994,36 +1222,39 @@ def update_candidate_math_evaluation(candidate_id, answers, correct_answers, eva
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        UPDATE candidates
-        SET math_answers = %s,
-            math_evaluation_results = %s,
-            math_average_score = %s,
-            math_test_completed = TRUE,
-            math_test_completed_at = %s
-        WHERE id = %s
-    """, (
-        answers,
-        json.dumps(evaluation_results),
-        average_score,
-        datetime.now(),
-        candidate_id
-    ))
+    if DB_TYPE == 'sqlite':
+        cur.execute("""
+            UPDATE candidates
+            SET math_answers = ?,
+                math_evaluation_results = ?,
+                math_average_score = ?,
+                math_test_completed = 1,
+                math_test_completed_at = ?
+            WHERE id = ?
+        """, (
+            answers,
+            json.dumps(evaluation_results),
+            average_score,
+            datetime.now(),
+            candidate_id
+        ))
+    else:
+        cur.execute("""
+            UPDATE candidates
+            SET math_answers = %s,
+                math_evaluation_results = %s,
+                math_average_score = %s,
+                math_test_completed = TRUE,
+                math_test_completed_at = %s
+            WHERE id = %s
+        """, (
+            answers,
+            json.dumps(evaluation_results),
+            average_score,
+            datetime.now(),
+            candidate_id
+        ))
 
-    conn.commit()
-    cur.close()
-    conn.close()
-
-def update_candidate_questions(candidate_id, questions_text, correct_answers):
-    """Update candidate with test questions and correct answers"""
-    import json
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE candidates
-        SET questions = %s, correct_answers = %s
-        WHERE id = %s
-    """, (questions_text, json.dumps(correct_answers), candidate_id))
     conn.commit()
     cur.close()
     conn.close()
